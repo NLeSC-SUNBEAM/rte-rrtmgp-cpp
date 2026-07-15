@@ -174,7 +174,7 @@ namespace Raytracer_functions
     {
         __device__ Random_number_generator(Int tid)
         {
-            #ifdef SAFERNG
+            #ifdef RTE_SAFE_RNG
             curand_init(0ULL, tid, Int(0), &state);
             #else
             curand_init(tid, 0ULL, Int(0), &state);

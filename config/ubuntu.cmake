@@ -1,5 +1,5 @@
 # Ubuntu 16.04
-if(USEMPI) 
+if(RTE_USE_MPI) 
   set(ENV{CC}  mpicc ) # C compiler for parallel build
   set(ENV{CXX} mpicxx) # C++ compiler for parallel build
   set(ENV{FC}  mpif90) # Fortran compiler for parallel build

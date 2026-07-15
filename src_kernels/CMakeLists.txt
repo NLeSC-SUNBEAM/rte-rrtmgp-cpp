@@ -1,7 +1,7 @@
 #
 # This file is part of a C++ interface to the Radiative Transfer for Energetics (RTE)
 #
-FILE(GLOB sourcefiles
+FILE(GLOB sourcefiles CONFIGURE_DEPENDS
     "../rte-rrtmgp/rte-frontend/mo_rte_kind.F90"
     "../rte-rrtmgp/rrtmgp-kernels/mo_gas_optics_rrtmgp_kernels.F90"
     "../rte-rrtmgp/rte-kernels/mo_rte_util_array.F90"

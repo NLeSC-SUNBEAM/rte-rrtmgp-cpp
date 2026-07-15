@@ -1,4 +1,4 @@
-FILE(GLOB sourcefiles_rt
+FILE(GLOB sourcefiles_rt CONFIGURE_DEPENDS
     "../src_kernels_cuda_rt/gas_optics_rrtmgp_kernels_launchers_rt.cu"
     "../src_kernels_cuda_rt/optical_props_kernels_launchers_rt.cu"
     "../src_kernels_cuda_rt/rte_solver_kernels_launchers_rt.cu"

@@ -1,7 +1,7 @@
 #
 # This file is part of a C++ interface to the Radiative Transfer for Energetics (RTE)
 #
-FILE(GLOB sourcefiles "../src/*.cpp")
+FILE(GLOB sourcefiles CONFIGURE_DEPENDS "../src/*.cpp")
 
 add_library(rte_rrtmgp STATIC ${sourcefiles} aerosol_optics.cpp ../include/aerosol_optics.h)
 target_include_directories(rte_rrtmgp SYSTEM PRIVATE ${INCLUDE_DIRS})

@@ -21,7 +21,8 @@ endif()
 
 # Load system specific settings if not set, force default.cmake.
 if(NOT SYST)
-  set(SYST default)
+  set(SYST default CACHE STRING
+    "Name of the config file in config/ (without .cmake extension) providing compiler and library settings for this machine." FORCE)
 endif()
 include(${SYST} OPTIONAL RESULT_VARIABLE SYSTINC)
 

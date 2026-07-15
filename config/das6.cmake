@@ -7,26 +7,24 @@ add_definitions(-DRESTRICTKEYWORD=__restrict__)
 
 set(USER_CXX_FLAGS_DEBUG "-O0 -g -Wall -Wno-unknown-pragmas")
 
-set(FFTW_LIB       "/opt/ohpc/pub/libs/gnu9/openmpi4/fftw/3.3.8/lib/libfftw3.so")
-set(FFTWF_LIB      "/opt/ohpc/pub/libs/gnu9/openmpi4/fftw/3.3.8/lib/libfftw3f.so")
-set(NETCDF_LIB_C   "/opt/ohpc/pub/libs/gnu9/openmpi4/netcdf/4.7.3/lib/libnetcdf.so")
-set(NETCDF_INCLUDE "/opt/ohpc/pub/libs/gnu9/openmpi4/netcdf/4.7.3/include")
-set(IRC_LIB        "irc")
-set(IRC_LIB        "")
-set(HDF5_LIB       "/opt/ohpc/pub/libs/gnu9/openmpi4/hdf5/1.10.6/lib/libhdf5.so")
-set(SZIP_LIB       "")
-set(BOOST_INCLUDE  "/opt/ohpc/pub/libs/gnu9/openmpi4/boost/1.73.0/include/")
+# NetCDF/HDF5/Boost are located via find_package() in the top-level
+# CMakeLists.txt; these EasyBuild module prefixes are not on CMake's default
+# search path, so they're passed as hints. (FFTW/IRC dropped: nothing in
+# this codebase calls either directly, they were unused link inputs.)
+list(APPEND CMAKE_PREFIX_PATH
+  "/opt/ohpc/pub/libs/gnu9/openmpi4/netcdf/4.7.3"
+  "/opt/ohpc/pub/libs/gnu9/openmpi4/hdf5/1.10.6"
+  "/opt/ohpc/pub/libs/gnu9/openmpi4/boost/1.73.0")
 
-#set(LIBS ${FFTW_LIB} ${FFTWF_LIB} ${NETCDF_LIB_C} ${HDF5_LIB} ${SZIP_LIB} ${IRC_LIB} m z curl)
-set(LIBS ${FFTW_LIB} ${FFTWF_LIB} ${NETCDF_LIB_C} ${HDF5_LIB} ${SZIP_LIB} ${IRC_LIB}) 
-set(INCLUDE_DIRS ${BOOST_INCLUDE} ${NETCDF_INCLUDE})
+set(LIBS "")
 
 if(RTE_USE_CUDA)
-    set(CUDA_PROPAGATE_HOST_FLAGS OFF)
     set(LIBS ${LIBS} -rdynamic)
-    set(USER_CUDA_NVCC_FLAGS "-arch=sm_80")
-    list(APPEND CUDA_NVCC_FLAGS "-std=c++14")
-    list(APPEND CUDA_NVCC_FLAGS "--expt-relaxed-constexpr")
+    # Previously set via USER_CUDA_NVCC_FLAGS / CUDA_NVCC_FLAGS, which are
+    # FindCUDA-module variables the top-level CMakeLists.txt never reads
+    # (it uses native CUDA-language support and reads USER_CUDA_FLAGS) --
+    # meaning these flags were silently never applied. Fixed here.
+    set(USER_CUDA_FLAGS "-std=c++14 -arch=sm_80 --expt-relaxed-constexpr")
 endif()
 
 add_definitions(-DRTE_USE_CBOOL)

@@ -8,7 +8,7 @@ option(RTE_USE_SP "Use single precision (32-bit) floats instead of double" OFF)
 option(RTE_USE_MPI "Use MPI compiler wrappers (mpicc/mpicxx/mpif90)" OFF)
 option(RTE_SAFE_RNG "Use a safer but slower pseudo-RNG initialization" OFF)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/config)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/config ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 # Set the precision of the build.
@@ -114,6 +114,19 @@ if(RTE_USE_CUDA)
   else()
     message(STATUS "NVCC-compiler flags: " ${CMAKE_CUDA_FLAGS} " " ${CMAKE_CUDA_FLAGS_DEBUG})
   endif()
+endif()
+
+# Third-party dependencies for configs that have been migrated off hardcoded
+# library paths (see the comments at the top of the migrated config/*.cmake
+# files). annuna/cloudy/das5 still set NETCDF_LIB_C themselves and keep
+# working through the legacy ${LIBS}/${INCLUDE_DIRS} variables further down
+# this file -- this block, and the target_link_libraries(... NetCDF::NetCDF
+# ...) calls it enables, are skipped entirely for those three and have no
+# effect on them.
+if(NOT NETCDF_LIB_C)
+  find_package(NetCDF REQUIRED)
+  find_package(HDF5 REQUIRED COMPONENTS C)
+  find_package(Boost REQUIRED)
 endif()
 
 # Shared INTERFACE "libraries" that carry include directories and compile

@@ -61,13 +61,20 @@ endif()
 
 set(USER_CXX_FLAGS_DEBUG "-O0 -g -Wall -Wno-unknown-pragmas")
 
-set(NETCDF_LIB_C "netcdf")
-set(HDF5_LIB "hdf5")
-set(SZIP_LIB "sz")
-set(LIBS ${NETCDF_LIB_C} ${HDF5_LIB} ${SZIP_LIB})
+# NetCDF/HDF5 are located via find_package() in the top-level
+# CMakeLists.txt. EBROOTNETCDF / EBROOTHDF5 are set by the EasyBuild
+# `module load` commands documented above, the same convention this file
+# already relied on for EBROOTCUDA below.
+if(DEFINED ENV{EBROOTNETCDF})
+  list(APPEND CMAKE_PREFIX_PATH "$ENV{EBROOTNETCDF}")
+endif()
+if(DEFINED ENV{EBROOTHDF5})
+  list(APPEND CMAKE_PREFIX_PATH "$ENV{EBROOTHDF5}")
+endif()
+
+set(LIBS sz)
 
 if(RTE_USE_CUDA)
-    set(CUDA_PROPAGATE_HOST_FLAGS OFF)
     set(CMAKE_CUDA_ARCHITECTURES 80)
     set(LIBS ${LIBS} -rdynamic $ENV{EBROOTCUDA}/lib64/libcufft.so)
     set(USER_CUDA_FLAGS "-arch=sm_80 -std=c++14 -O3 --expt-relaxed-constexpr")

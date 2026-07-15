@@ -15,13 +15,11 @@ set(USER_FC_FLAGS_RELEASE "-DNDEBUG -O3 -march=native")
 set(USER_FC_FLAGS_DEBUG "-O0 -g -Wall -Wno-unknown-pragmas")
 
 set(CUB_INCLUDE_DIR "/usr/local/cuda/include")
-set(NETCDF_INCLUDE_DIR "/usr/include")
-set(NETCDF_LIB_C       "/usr/lib/x86_64-linux-gnu/libnetcdf.so")
-set(HDF5_LIB_1         "/usr/lib/x86_64-linux-gnu/libhdf5_serial.so")
-set(HDF5_LIB_2         "/usr/lib/x86_64-linux-gnu/libhdf5_serial_hl.so")
-set(SZIP_LIB           "")
-set(LIBS ${NETCDF_LIB_C} ${HDF5_LIB_2} ${HDF5_LIB_1} ${SZIP_LIB} m z curl)
-set(INCLUDE_DIRS ${NETCDF_INCLUDE_DIR} ${CUB_INCLUDE_DIR})
+
+# NetCDF/HDF5/Boost are located via find_package() in the top-level
+# CMakeLists.txt; /usr is on CMake's default search path, no hint needed.
+set(LIBS m z curl)
+set(INCLUDE_DIRS ${CUB_INCLUDE_DIR})
 
 if(RTE_USE_CUDA)
   set(CUDA_PROPAGATE_HOST_FLAGS OFF)

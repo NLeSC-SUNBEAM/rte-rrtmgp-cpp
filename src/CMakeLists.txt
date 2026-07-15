@@ -8,3 +8,6 @@ target_include_directories(rte_rrtmgp SYSTEM PRIVATE ${INCLUDE_DIRS})
 target_link_libraries(rte_rrtmgp
   PUBLIC  rte_rrtmgp_headers
   PRIVATE rte_rrtmgp_kernels)
+if(TARGET Boost::boost)
+  target_link_libraries(rte_rrtmgp PRIVATE Boost::boost)
+endif()

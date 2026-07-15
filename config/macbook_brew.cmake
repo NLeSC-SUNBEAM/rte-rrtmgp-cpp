@@ -18,13 +18,12 @@ set(USER_FC_FLAGS "-std=f2003 -fdefault-real-8 -fdefault-double-8 -fPIC -ffixed-
 set(USER_FC_FLAGS_RELEASE "-DNDEBUG -O3 -march=native")
 set(USER_FC_FLAGS_DEBUG "-O0 -g -Wall -Wno-unknown-pragmas")
 
-set(NETCDF_INCLUDE_DIR "/usr/local/include")
-set(NETCDF_LIB_C       "/usr/local/lib/libnetcdf.dylib")
-set(HDF5_LIB_1         "/usr/local/lib/libhdf5.dylib")
-set(HDF5_LIB_2         "/usr/local/lib/libhdf5_hl.dylib")
-set(SZIP_LIB           "/usr/local/lib/libsz.dylib")
-set(LIBS ${NETCDF_LIB_CPP} ${NETCDF_LIB_C} ${HDF5_LIB_2} ${HDF5_LIB_1} ${SZIP_LIB} m z curl)
-set(INCLUDE_DIRS ${FFTW_INCLUDE_DIR} ${NETCDF_INCLUDE_DIR})
+# NetCDF/HDF5/Boost are located via find_package() in the top-level
+# CMakeLists.txt. Homebrew's default prefix is /usr/local on Intel Macs and
+# /opt/homebrew on Apple Silicon; hint both so find_package() works on either.
+list(APPEND CMAKE_PREFIX_PATH "/usr/local" "/opt/homebrew")
+
+set(LIBS m z curl)
 
 add_definitions(-DRESTRICTKEYWORD=__restrict__)
 add_definitions(-DRTE_USE_CBOOL)

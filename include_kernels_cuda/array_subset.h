@@ -2,7 +2,7 @@
 #define ARRAY_SUBSET_H
 
 
-#ifdef __CUDACC__
+#ifdef RTE_USE_CUDA
 template<int N>
 struct Subset_data
 {

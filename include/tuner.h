@@ -10,7 +10,7 @@
 #include <map>
 
 
-// #ifdef __CUDACC__
+// #ifdef RTE_USE_CUDA
 using Tuner_map = std::map<std::string, std::pair<dim3, dim3>>;
 // #endif
 

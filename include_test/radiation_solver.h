@@ -64,7 +64,7 @@ class Radiation_solver_longwave
         Array<Float,2> get_band_lims_wavenumber() const
         { return this->kdist->get_band_lims_wavenumber(); }
 
-        #ifdef __CUDACC__
+        #ifdef RTE_USE_CUDA
         void solve_gpu(
                 const bool switch_fluxes,
                 const bool switch_cloud_optics,
@@ -91,7 +91,7 @@ class Radiation_solver_longwave
         std::unique_ptr<Gas_optics_rrtmgp> kdist;
         std::unique_ptr<Cloud_optics> cloud_optics;
 
-        #ifdef __CUDACC__
+        #ifdef RTE_USE_CUDA
         std::unique_ptr<Gas_optics_rrtmgp_gpu> kdist_gpu;
         std::unique_ptr<Cloud_optics_gpu> cloud_optics_gpu;
         Rte_lw_gpu rte_lw;
@@ -156,7 +156,7 @@ class Radiation_solver_shortwave
         Array<Float,2> get_band_lims_wavenumber() const
         { return this->kdist->get_band_lims_wavenumber(); }
 
-        #ifdef __CUDACC__
+        #ifdef RTE_USE_CUDA
         void solve_gpu(
                 const bool switch_fluxes,
                 const bool switch_cloud_optics,
@@ -193,7 +193,7 @@ class Radiation_solver_shortwave
         std::unique_ptr<Cloud_optics> cloud_optics;
         std::unique_ptr<Aerosol_optics> aerosol_optics;
 
-        #ifdef __CUDACC__
+        #ifdef RTE_USE_CUDA
         std::unique_ptr<Gas_optics_gpu> kdist_gpu;
         std::unique_ptr<Cloud_optics_gpu> cloud_optics_gpu;
         std::unique_ptr<Aerosol_optics_gpu> aerosol_optics_gpu;

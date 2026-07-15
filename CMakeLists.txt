@@ -2,15 +2,21 @@
 # This file is part of a C++ interface to the Radiative Transfer for Energetics (RTE)
 #
 cmake_minimum_required (VERSION 3.18)
+
+option(RTE_USE_CUDA "Build the CUDA (GPU) libraries and executables" OFF)
+option(RTE_USE_SP "Use single precision (32-bit) floats instead of double" OFF)
+option(RTE_USE_MPI "Use MPI compiler wrappers (mpicc/mpicxx/mpif90)" OFF)
+option(RTE_SAFE_RNG "Use a safer but slower pseudo-RNG initialization" OFF)
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/config)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 # Set the precision of the build.
-if(USESP)
-  message(STATUS "Precision: Single (32-bits floats)")
+if(RTE_USE_SP)
+  message(STATUS "Precision: Single (32-bits) floats")
   add_compile_definitions(RTE_USE_SP)
 else()
-  message(STATUS "Precision: Double (64-bits floats)")
+  message(STATUS "Precision: Double (64-bits) floats")
 endif()
 
 # Load system specific settings if not set, force default.cmake.
@@ -36,23 +42,23 @@ endif()
 
 # Start the project only after the system specific settings are loaded.
 # If CUDA is enabled, don't compile the Fortran kernels as they are not needed.
-if(USECUDA)
+if(RTE_USE_CUDA)
   project(rte-rrtmgp-cpp C CXX Fortran CUDA)
 else()
   project(rte-rrtmgp-cpp C CXX Fortran)
 endif()
 
 # Load the CUDA module in case CUDA is enabled and display status message.
-if(USECUDA)
+if(RTE_USE_CUDA)
   message(STATUS "CUDA: Enabled.")
-  add_definitions("-DUSECUDA")
+  add_definitions("-DRTE_USE_CUDA")
 else()
   message(STATUS "CUDA: Disabled.")
 endif()
 
-if (SAFERNG)
-  message(STATUS "SAFERNG: Use safer but slower initialization of pseudo-rng.")
-  add_definitions("-DSAFERNG")
+if (RTE_SAFE_RNG)
+  message(STATUS "RTE_SAFE_RNG: Use safer but slower initialization of pseudo-rng.")
+  add_definitions("-DRTE_SAFE_RNG")
 endif()
 
 # Only set the compiler flags when the cache is created
@@ -79,7 +85,7 @@ if(NOT HASCACHE)
   set(CMAKE_Fortran_FLAGS_RELEASE ${USER_FC_FLAGS_RELEASE} CACHE STRING
     "Flags used by the Fortran-compiler during release builds." FORCE)
 
-  if(USECUDA)
+  if(RTE_USE_CUDA)
     set(CMAKE_CUDA_FLAGS ${USER_CUDA_FLAGS} CACHE STRING
       "Flags used by the CXX-compiler during all build types." FORCE)
     set(CMAKE_CUDA_FLAGS_DEBUG ${USER_CUDA_FLAGS_DEBUG} CACHE STRING
@@ -104,7 +110,7 @@ else()
   message(STATUS "CXX-compiler flags: " ${CMAKE_CXX_FLAGS} " " ${CMAKE_CXX_FLAGS_DEBUG})
   message(STATUS "Fortran-compiler flags: " ${CMAKE_CXX_FLAGS} " " ${CMAKE_CXX_FLAGS_DEBUG})
 endif()
-if(USECUDA)
+if(RTE_USE_CUDA)
   if(CMAKE_BUILD_TYPE STREQUAL "RELEASE")
     message(STATUS "NVCC-compiler flags: " ${CMAKE_CUDA_FLAGS} " " ${CMAKE_CUDA_FLAGS_RELEASE})
   else()
@@ -112,7 +118,7 @@ if(USECUDA)
   endif()
 endif()
 
-if(USECUDA)
+if(RTE_USE_CUDA)
   add_subdirectory(src_kernels_cuda)
   add_subdirectory(src_cuda)
   add_subdirectory(src_kernels_cuda_rt)

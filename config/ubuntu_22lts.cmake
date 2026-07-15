@@ -23,7 +23,7 @@ set(SZIP_LIB           "")
 set(LIBS ${NETCDF_LIB_C} ${HDF5_LIB_2} ${HDF5_LIB_1} ${SZIP_LIB} m z curl)
 set(INCLUDE_DIRS ${NETCDF_INCLUDE_DIR} ${CUB_INCLUDE_DIR})
 
-if(USECUDA)
+if(RTE_USE_CUDA)
   set(CUDA_PROPAGATE_HOST_FLAGS OFF)
   set(CMAKE_CUDA_ARCHITECTURES 86)
   set(USER_CUDA_FLAGS "-std=c++17 -expt-relaxed-constexpr")

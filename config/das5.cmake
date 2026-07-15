@@ -1,4 +1,4 @@
-# GCC compiler (if USECUDA is on, build on GPU):
+# GCC compiler (if RTE_USE_CUDA is on, build on GPU):
 # module purge
 # module load eb #(Use the new software development and installation framework EasyBuild currently implemented by SURFsara)
 # module load surfsara
@@ -30,7 +30,7 @@ set(SZIP_LIB       "sz")
 set(LIBS ${FFTW_LIB} ${FFTWF_LIB} ${NETCDF_LIB_C} ${HDF5_LIB} ${SZIP_LIB} ${IRC_LIB} m z curl)
 set(INCLUDE_DIRS ${NETCDF_INCLUDE})
 
-if(USECUDA)
+if(RTE_USE_CUDA)
     set(CUDA_PROPAGATE_HOST_FLAGS OFF)
     set(LIBS ${LIBS} -rdynamic)
     set(USER_CUDA_NVCC_FLAGS "-arch=sm_35")

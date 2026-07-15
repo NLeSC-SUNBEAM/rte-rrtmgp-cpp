@@ -66,7 +66,7 @@ class Source_func_lw : public Optical_props
 };
 
 
-#ifdef USECUDA
+#ifdef RTE_USE_CUDA
 class Source_func_lw_gpu : public Optical_props_gpu
 {
     public:

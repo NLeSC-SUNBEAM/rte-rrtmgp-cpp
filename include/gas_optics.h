@@ -83,7 +83,7 @@ class Gas_optics : public Optical_props
 };
 
 
-#ifdef USECUDA
+#ifdef RTE_USE_CUDA
 class Gas_optics_gpu : public Optical_props_gpu
 {
     public:

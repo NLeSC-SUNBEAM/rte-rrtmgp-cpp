@@ -2,7 +2,7 @@
 #define RAYTRACER_LW_RT_H
 
 #include <memory>
-#ifdef USECUDA
+#ifdef RTE_USE_CUDA
 #include <curand_kernel.h>
 #endif
 
@@ -15,7 +15,7 @@ template<typename, int> class Array_gpu;
 class Optical_props_rt;
 class Optical_props_arry_rt;
 
-#ifdef USECUDA
+#ifdef RTE_USE_CUDA
 class Raytracer_lw
 {
     public:

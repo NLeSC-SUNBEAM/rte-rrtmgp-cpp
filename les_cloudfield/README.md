@@ -4,7 +4,7 @@ Input and reference output files are stored on Zenodo: https://doi.org/10.5281/z
 
 How to run:
 
-1. `Compile code (following the basic instructions) with -DUSECUDA`
+1. `Compile code (following the basic instructions) with -DRTE_USE_CUDA`
 2. `ln -s {BUILD_DIRECTORY}/{EXECUTABLE_NAME} test_rte_rrtmgp_*` (link the executables)
 3. `./make_links.sh`                                             (link the coefficients)
 4. `download input and reference output files from https://doi.org/10.5281/zenodo.18757088`

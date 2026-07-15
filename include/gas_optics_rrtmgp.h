@@ -285,7 +285,7 @@ class Gas_optics_rrtmgp : public Gas_optics
 
 };
 
-#ifdef USECUDA
+#ifdef RTE_USE_CUDA
 class Gas_optics_rrtmgp_gpu : public Gas_optics_gpu
 {
     public:

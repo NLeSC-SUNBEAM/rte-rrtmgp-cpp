@@ -123,7 +123,7 @@ class Fluxes_byband : public Fluxes_broadband
 };
 
 
-//#ifdef USECUDA
+//#ifdef RTE_USE_CUDA
 class Fluxes_gpu
 {
     public:

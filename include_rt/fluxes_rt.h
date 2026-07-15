@@ -35,7 +35,7 @@
 class Optical_props_arry_rt;
 
 
-//#ifdef USECUDA
+//#ifdef RTE_USE_CUDA
 
 class Fluxes_rt
 {

@@ -3,7 +3,7 @@ set(ENV{CC}  gcc) # C compiler for serial build
 set(ENV{CXX} g++) # C++ compiler for serial build
 set(ENV{FC}  gfortran) # Fortran compiler for serial build
 
-if(USECUDA)
+if(RTE_USE_CUDA)
   set(USER_CXX_FLAGS "-std=c++17 -fopenmp")
 else()
   set(USER_CXX_FLAGS "-std=c++17")
@@ -21,7 +21,7 @@ set(HDF5_LIB_1         "/usr/lib/x86_64-linux-gnu/libhdf5_serial.so")
 set(HDF5_LIB_2         "/usr/lib/x86_64-linux-gnu/libhdf5_serial_hl.so")
 set(SZIP_LIB           "")
 
-if(USECUDA)
+if(RTE_USE_CUDA)
   set(CUDA_INCLUDE_DIRS "/opt/nvidia/hpc_sdk/Linux_x86_64/23.1/math_libs/include" "/opt/nvidia/hpc_sdk/Linux_x86_64/23.1/cuda/include")
   set(CURAND_LIBS       "/opt/nvidia/hpc_sdk/Linux_x86_64/23.1/math_libs/lib64/libcurand.so")
 else()
@@ -32,7 +32,7 @@ endif()
 set(LIBS ${NETCDF_LIB_C} ${HDF5_LIB_2} ${HDF5_LIB_1} ${SZIP_LIB} ${CURAND_LIBS} m z curl)
 set(INCLUDE_DIRS ${FFTW_INCLUDE_DIR} ${NETCDF_INCLUDE_DIR} ${CUDA_INCLUDE_DIRS})
 
-if(USECUDA)
+if(RTE_USE_CUDA)
   set(CMAKE_CUDA_ARCHITECTURES 86)
   set(CUDA_PROPAGATE_HOST_FLAGS OFF)
   set(USER_CUDA_NVCC_FLAGS "-std=c++17 -arch=sm_86 --expt-relaxed-constexpr")

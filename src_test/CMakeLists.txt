@@ -24,7 +24,7 @@ message(STATUS "Git hash " ${GITHASH})
 # send a precompiler statement replacing the git hash
 add_definitions(-DGITHASH="${GITHASH}")
 
-if(USECUDA)
+if(RTE_USE_CUDA)
   add_executable(test_rte_rrtmgp radiation_solver.cu test_rte_rrtmgp.cu)
   target_link_libraries(test_rte_rrtmgp rte_rrtmgp rte_rrtmgp_cuda ${LIBS} m)
 

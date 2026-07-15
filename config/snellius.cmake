@@ -24,7 +24,7 @@
 set(USEINTEL FALSE)
 
 # GPU builds are always with GCC:
-if(USECUDA)
+if(RTE_USE_CUDA)
     set(USEINTEL FALSE)
 endif()
 
@@ -39,7 +39,7 @@ else()
 endif()
 
 # Set compiler flags / options:
-if(USECUDA)
+if(RTE_USE_CUDA)
     set(USER_CXX_FLAGS "-std=c++14 -fopenmp")
     set(USER_CXX_FLAGS_RELEASE "-Ofast -march=icelake-server -mtune=icelake-server")
     add_definitions(-DRESTRICTKEYWORD=__restrict__)
@@ -66,7 +66,7 @@ set(HDF5_LIB "hdf5")
 set(SZIP_LIB "sz")
 set(LIBS ${NETCDF_LIB_C} ${HDF5_LIB} ${SZIP_LIB})
 
-if(USECUDA)
+if(RTE_USE_CUDA)
     set(CUDA_PROPAGATE_HOST_FLAGS OFF)
     set(CMAKE_CUDA_ARCHITECTURES 80)
     set(LIBS ${LIBS} -rdynamic $ENV{EBROOTCUDA}/lib64/libcufft.so)

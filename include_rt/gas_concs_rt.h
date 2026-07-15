@@ -33,7 +33,7 @@
 
 template<typename, int> class Array;
 
-#ifdef USECUDA
+#ifdef RTE_USE_CUDA
 class Gas_concs_rt;
 #endif
 
@@ -65,7 +65,7 @@ class Gas_concs_rt;
 //};
 
 
-#ifdef USECUDA
+#ifdef RTE_USE_CUDA
 template<typename, int> class Array_gpu;
 
 

@@ -34,7 +34,7 @@
 class Gas_concs_gpu;
 class Source_func_lw_rt;
 
-#ifdef USECUDA
+#ifdef RTE_USE_CUDA
 class Gas_optics_rt : public Optical_props_rt
 {
     public:

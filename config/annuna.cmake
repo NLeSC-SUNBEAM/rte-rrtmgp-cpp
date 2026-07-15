@@ -26,7 +26,7 @@ set(HDF5_LIB     "hdf5")
 
 set(LIBS ${NETCDF_LIB_C} ${HDF5_LIB} m z curl)
 
-if(USECUDA)
+if(RTE_USE_CUDA)
   set(CUDA_PROPAGATE_HOST_FLAGS OFF)
   set(CUFFT_LIB "/cm/shared/apps/cuda/10.1/lib64/libcufft.so")
   set(LIBS ${LIBS} ${CUFFT_LIB} -rdynamic )

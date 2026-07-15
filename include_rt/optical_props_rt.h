@@ -31,7 +31,7 @@
 #include "types.h"
 
 // GPU version of optical props class
-#ifdef USECUDA
+#ifdef RTE_USE_CUDA
 
 // Forward declare the classes in order to define add_to before the classes to enable friend function.
 class Optical_props_1scl_rt;

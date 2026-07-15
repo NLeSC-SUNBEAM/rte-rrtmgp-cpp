@@ -15,7 +15,7 @@ cmake -DSYST=macbook_brew ..
 make
 
 # CUDA build
-cmake -DSYST=<config> -DUSECUDA=ON ..
+cmake -DSYST=<config> -DRTE_USE_CUDA=ON ..
 
 # Single precision build
 cmake -DSYST=<config> -DUSESP=ON ..

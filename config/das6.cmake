@@ -21,7 +21,7 @@ set(BOOST_INCLUDE  "/opt/ohpc/pub/libs/gnu9/openmpi4/boost/1.73.0/include/")
 set(LIBS ${FFTW_LIB} ${FFTWF_LIB} ${NETCDF_LIB_C} ${HDF5_LIB} ${SZIP_LIB} ${IRC_LIB}) 
 set(INCLUDE_DIRS ${BOOST_INCLUDE} ${NETCDF_INCLUDE})
 
-if(USECUDA)
+if(RTE_USE_CUDA)
     set(CUDA_PROPAGATE_HOST_FLAGS OFF)
     set(LIBS ${LIBS} -rdynamic)
     set(USER_CUDA_NVCC_FLAGS "-arch=sm_80")

@@ -58,7 +58,7 @@ class Rte_lw
                 Array<Float,2>& arr_out);
 };
 
-#ifdef USECUDA
+#ifdef RTE_USE_CUDA
 class Rte_lw_gpu
 {
     public:

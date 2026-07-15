@@ -14,7 +14,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 # Set the precision of the build.
 if(RTE_USE_SP)
   message(STATUS "Precision: Single (32-bits) floats")
-  add_compile_definitions(RTE_USE_SP)
 else()
   message(STATUS "Precision: Double (64-bits) floats")
 endif()
@@ -52,14 +51,12 @@ endif()
 # Load the CUDA module in case CUDA is enabled and display status message.
 if(RTE_USE_CUDA)
   message(STATUS "CUDA: Enabled.")
-  add_definitions("-DRTE_USE_CUDA")
 else()
   message(STATUS "CUDA: Disabled.")
 endif()
 
 if (RTE_SAFE_RNG)
   message(STATUS "RTE_SAFE_RNG: Use safer but slower initialization of pseudo-rng.")
-  add_definitions("-DRTE_SAFE_RNG")
 endif()
 
 # Only set the compiler flags when the cache is created
@@ -119,7 +116,30 @@ if(RTE_USE_CUDA)
   endif()
 endif()
 
+# Shared INTERFACE "libraries" that carry include directories and compile
+# definitions to every target via target_link_libraries(), replacing the
+# directory-scoped include_directories()/add_definitions() calls that used
+# to apply blindly to every target in every subdirectory.
+add_library(rte_rrtmgp_headers INTERFACE)
+target_include_directories(rte_rrtmgp_headers INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 if(RTE_USE_CUDA)
+  target_compile_definitions(rte_rrtmgp_headers INTERFACE RTE_USE_CUDA)
+endif()
+if(RTE_USE_SP)
+  target_compile_definitions(rte_rrtmgp_headers INTERFACE RTE_USE_SP)
+endif()
+
+if(RTE_USE_CUDA)
+  add_library(rte_rrtmgp_cuda_headers INTERFACE)
+  target_include_directories(rte_rrtmgp_cuda_headers INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include_kernels_cuda")
+
+  add_library(rte_rrtmgp_rt_headers INTERFACE)
+  target_include_directories(rte_rrtmgp_rt_headers INTERFACE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include_rt" "${CMAKE_CURRENT_SOURCE_DIR}/include_rt_kernels")
+  if(RTE_SAFE_RNG)
+    target_compile_definitions(rte_rrtmgp_rt_headers INTERFACE RTE_SAFE_RNG)
+  endif()
+
   add_subdirectory(src_kernels_cuda)
   add_subdirectory(src_cuda)
   add_subdirectory(src_kernels_cuda_rt)

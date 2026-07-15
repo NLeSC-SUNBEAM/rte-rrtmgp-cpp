@@ -15,8 +15,8 @@ if(CMAKE_BUILD_TYPE STREQUAL "RELEASE")
     set_source_files_properties("../src_kernels_cuda_rt/raytracer_kernels_bw.cu" PROPERTIES COMPILE_FLAGS --use_fast_math)
 endif()
 
-include_directories("../include" "../include_rt" "../include_rt_kernels" SYSTEM ${INCLUDE_DIRS})
-
 add_library(rte_rrtmgp_kernels_cuda_rt STATIC ${sourcefiles_rt})
+target_include_directories(rte_rrtmgp_kernels_cuda_rt SYSTEM PRIVATE ${INCLUDE_DIRS})
+target_link_libraries(rte_rrtmgp_kernels_cuda_rt PRIVATE rte_rrtmgp_headers rte_rrtmgp_rt_headers)
 
 

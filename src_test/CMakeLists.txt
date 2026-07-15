@@ -1,8 +1,6 @@
 #
 # This file is part of a C++ interface to the Radiative Transfer for Energetics (RTE)
 #
-include_directories(${INCLUDE_DIRS} "../include" "../include_test" "../include_rt" "../include_rt_kernels/" "../include_kernels_cuda" "../include_tilt")
-
 # retrieve the git hash from the current commit
 find_package(Git)
 
@@ -21,22 +19,31 @@ endif()
 
 message(STATUS "Git hash " ${GITHASH})
 
-# send a precompiler statement replacing the git hash
-add_definitions(-DGITHASH="${GITHASH}")
-
 if(RTE_USE_CUDA)
   add_executable(test_rte_rrtmgp radiation_solver.cu test_rte_rrtmgp.cu)
-  target_link_libraries(test_rte_rrtmgp rte_rrtmgp rte_rrtmgp_cuda ${LIBS} m)
+  target_include_directories(test_rte_rrtmgp PRIVATE "../include_test")
+  target_include_directories(test_rte_rrtmgp SYSTEM PRIVATE ${INCLUDE_DIRS})
+  target_compile_definitions(test_rte_rrtmgp PRIVATE GITHASH="${GITHASH}")
+  target_link_libraries(test_rte_rrtmgp PRIVATE rte_rrtmgp rte_rrtmgp_cuda ${LIBS} m)
 
   add_executable(test_rte_rrtmgp_rt radiation_solver_rt.cu test_rte_rrtmgp_rt.cu radiation_solver_bw.cu ../src_tilt/tilt_utils.cpp)
-  target_link_libraries(test_rte_rrtmgp_rt rte_rrtmgp rte_rrtmgp_cuda rte_rrtmgp_cuda_rt curand ${LIBS} m)
+  target_include_directories(test_rte_rrtmgp_rt PRIVATE "../include_test" "../include_tilt")
+  target_include_directories(test_rte_rrtmgp_rt SYSTEM PRIVATE ${INCLUDE_DIRS})
+  target_compile_definitions(test_rte_rrtmgp_rt PRIVATE GITHASH="${GITHASH}")
+  target_link_libraries(test_rte_rrtmgp_rt PRIVATE rte_rrtmgp rte_rrtmgp_cuda rte_rrtmgp_cuda_rt curand ${LIBS} m)
 
   #add_executable(test_rte_rrtmgp_bw radiation_solver_bw.cu test_rte_rrtmgp_bw.cu)
-  #target_link_libraries(test_rte_rrtmgp_bw rte_rrtmgp rte_rrtmgp_cuda rte_rrtmgp_cuda_rt curand ${LIBS} m)
+  #target_link_libraries(test_rte_rrtmgp_bw PRIVATE rte_rrtmgp rte_rrtmgp_cuda rte_rrtmgp_cuda_rt curand ${LIBS} m)
 
   add_executable(test_rt_lite test_rt_lite.cu)
-  target_link_libraries(test_rt_lite rte_rrtmgp_cuda rte_rrtmgp_cuda_rt curand ${LIBS} m)
+  target_include_directories(test_rt_lite PRIVATE "../include_test")
+  target_include_directories(test_rt_lite SYSTEM PRIVATE ${INCLUDE_DIRS})
+  target_compile_definitions(test_rt_lite PRIVATE GITHASH="${GITHASH}")
+  target_link_libraries(test_rt_lite PRIVATE rte_rrtmgp_cuda rte_rrtmgp_cuda_rt curand ${LIBS} m)
 else()
   add_executable(test_rte_rrtmgp radiation_solver.cpp test_rte_rrtmgp.cpp)
-  target_link_libraries(test_rte_rrtmgp rte_rrtmgp ${LIBS} m)
+  target_include_directories(test_rte_rrtmgp PRIVATE "../include_test")
+  target_include_directories(test_rte_rrtmgp SYSTEM PRIVATE ${INCLUDE_DIRS})
+  target_compile_definitions(test_rte_rrtmgp PRIVATE GITHASH="${GITHASH}")
+  target_link_libraries(test_rte_rrtmgp PRIVATE rte_rrtmgp ${LIBS} m)
 endif()

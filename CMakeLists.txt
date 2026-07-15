@@ -149,3 +149,12 @@ endif()
 add_subdirectory(src)
 add_subdirectory(src_kernels)
 add_subdirectory(src_test)
+
+# ctest entry point for the existing rfmip/allsky Python-script test cases.
+# Data staging (make_links.sh, linking the test_rte_rrtmgp executable) is
+# not handled here, same as it wasn't handled by the shell scripts or the
+# CI workflow this replaces -- run it before `ctest` as documented in each
+# test directory's README.
+enable_testing()
+add_subdirectory(rfmip)
+add_subdirectory(allsky)

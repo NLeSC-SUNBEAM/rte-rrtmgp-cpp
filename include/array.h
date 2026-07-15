@@ -32,7 +32,7 @@
 #include <fstream>
 #include <utility>
 
-#ifdef RTE_USE_CUDA
+#ifdef __CUDACC__
 #include "tools_gpu.h"
 template<typename T, int N> class Array_gpu;
 #endif
@@ -141,7 +141,7 @@ class Array
             offsets(std::exchange(array.offsets, {}))
         {}
 
-        #ifdef RTE_USE_CUDA
+        #ifdef __CUDACC__
         Array(const Array_gpu<T, N>& array_gpu) :
             dims(array_gpu.dims),
             ncells(array_gpu.ncells),
@@ -291,13 +291,13 @@ class Array
         std::array<int, N> strides;
         std::array<int, N> offsets;
 
-        #ifdef RTE_USE_CUDA
+        #ifdef __CUDACC__
         friend class Array_gpu<T, N>;
         #endif
 };
 
 
-#ifdef RTE_USE_CUDA
+#ifdef __CUDACC__
 template<int N>
 struct Subset_data
 {
@@ -364,7 +364,7 @@ class Array_gpu
             is_view(false)
         {}
 
-        #ifdef RTE_USE_CUDA
+        #ifdef __CUDACC__
         ~Array_gpu()
         {
             if (is_view)
@@ -374,7 +374,7 @@ class Array_gpu
         }
         #endif
 
-        #ifdef RTE_USE_CUDA
+        #ifdef __CUDACC__
         Array_gpu& operator=(const Array_gpu<T, N>& array)
         {
             if ( !(this->ncells == array.size() || (this->ncells == 0 && data_ptr == nullptr)) )
@@ -404,7 +404,7 @@ class Array_gpu
         }
         #endif
 
-        #ifdef RTE_USE_CUDA
+        #ifdef __CUDACC__
         Array_gpu& operator=(Array_gpu<T, N>&& array)
         {
             if ( !(this->ncells == array.size() || (this->ncells == 0 && data_ptr == nullptr)) )
@@ -424,7 +424,7 @@ class Array_gpu
         }
         #endif
 
-        #ifdef RTE_USE_CUDA
+        #ifdef __CUDACC__
         Array_gpu(const Array_gpu<T, N>& array) :
             dims(array.dims),
             ncells(array.ncells),
@@ -446,7 +446,7 @@ class Array_gpu
         }
         #endif
 
-        #ifdef RTE_USE_CUDA
+        #ifdef __CUDACC__
         Array_gpu(Array_gpu<T, N>&& array) :
             dims(std::exchange(array.dims, {})),
             ncells(std::exchange(array.ncells, 0)),
@@ -458,7 +458,7 @@ class Array_gpu
         }
         #endif
 
-        #ifdef RTE_USE_CUDA
+        #ifdef __CUDACC__
         // Create an array of zeros with given dimensions.
         Array_gpu(const std::array<int, N>& dims) :
             dims(dims),
@@ -472,7 +472,7 @@ class Array_gpu
         }
         #endif
 
-        #ifdef RTE_USE_CUDA
+        #ifdef __CUDACC__
         // Create an array that is a view.
         Array_gpu(T* ptr, const std::array<int, N>& dims) :
             dims(dims),
@@ -485,7 +485,7 @@ class Array_gpu
         }
         #endif
 
-        #ifdef RTE_USE_CUDA
+        #ifdef __CUDACC__
         Array_gpu(const Array<T, N>& array) :
             dims(array.dims),
             ncells(array.ncells),
@@ -506,7 +506,7 @@ class Array_gpu
 
         inline std::array<int, N> get_dims() const { return dims; }
 
-        #ifdef RTE_USE_CUDA
+        #ifdef __CUDACC__
         inline void fill(const T value)
         {
             constexpr int block_ncells = 64;
@@ -519,7 +519,7 @@ class Array_gpu
         }
         #endif
 
-        #ifdef RTE_USE_CUDA
+        #ifdef __CUDACC__
         inline void set_data(const Array<T, N>& array)
         {
             data_ptr = Tools_gpu::allocate_gpu<T>(ncells);
@@ -527,7 +527,7 @@ class Array_gpu
         }
         #endif
 
-        #ifdef RTE_USE_CUDA
+        #ifdef __CUDACC__
         inline void set_dims(const std::array<int, N>& dims)
         {
             if ( !(this->ncells == 0 && data_ptr == nullptr) )
@@ -543,7 +543,7 @@ class Array_gpu
 
         inline void copy(const std::array<int, N>& indices, Array_gpu<T, N>& input, const std::array<int, N>& indices_input) const
         {
-            #ifdef RTE_USE_CUDA
+            #ifdef __CUDACC__
             const int index = calc_index<N>(indices, strides, offsets);
             const int index_in =  calc_index<N>(indices_input, input.strides, input.offsets);
             cuda_safe_call(cudaMemcpy(data_ptr + index, input.ptr() + index_in, sizeof(T), cudaMemcpyDeviceToDevice));
@@ -552,7 +552,7 @@ class Array_gpu
 
         inline void insert(const std::array<int, N>& indices, const T value) const
         {
-            #ifdef RTE_USE_CUDA
+            #ifdef __CUDACC__
             const int index = calc_index<N>(indices, strides, offsets);
             cuda_safe_call(cudaMemcpy(data_ptr + index, &value, sizeof(T), cudaMemcpyHostToDevice));
             #endif
@@ -563,7 +563,7 @@ class Array_gpu
 
         inline int size() const { return ncells; }
 
-        #ifdef RTE_USE_CUDA
+        #ifdef __CUDACC__
         inline T operator()(const std::array<int, N>& indices) const
         {
             const int index = calc_index<N>(indices, strides, offsets);
@@ -575,7 +575,7 @@ class Array_gpu
 
         inline int dim(const int i) const { return dims[i-1]; }
 
-        #ifdef RTE_USE_CUDA
+        #ifdef __CUDACC__
         inline Array_gpu<T, N> subset(
                 const std::array<std::pair<int, int>, N> ranges) const
         {

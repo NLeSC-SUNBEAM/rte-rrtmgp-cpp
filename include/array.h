@@ -34,7 +34,7 @@
 
 #include "gpu/tools_gpu.h"
 
-
+// Forward declarations
 template<typename T, int N> class Array_gpu;
 
 template<int N>
@@ -140,7 +140,6 @@ class Array
             offsets(std::exchange(array.offsets, {}))
         {}
 
-        
         Array(const Array_gpu<T, N>& array_gpu) :
             dims(array_gpu.dims),
             ncells(array_gpu.ncells),
@@ -307,6 +306,8 @@ struct Subset_data
     int offsets[N];
     bool do_spread[N];
 };
+
+#ifdef RTE_USE_CUDA
 
 #ifdef __CUDACC__
 template<typename T, int N> __global__
@@ -659,6 +660,8 @@ class Array_gpu
 
         friend class Array<T, N>;
 };
+
+#endif // RTE_USE_CUDA
 
 template<typename T, int N>
 bool any_vals_outside(const Array<T, N>& array, const T lower_limit, const T upper_limit)

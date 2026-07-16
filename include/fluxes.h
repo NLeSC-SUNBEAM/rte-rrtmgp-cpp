@@ -123,7 +123,8 @@ class Fluxes_byband : public Fluxes_broadband
 };
 
 
-//#ifdef RTE_USE_CUDA
+#ifdef RTE_USE_CUDA
+
 class Fluxes_gpu
 {
     public:
@@ -209,4 +210,7 @@ class Fluxes_byband_gpu : public Fluxes_broadband_gpu
         Array_gpu<Float,3> bnd_flux_dn_dir;
         Array_gpu<Float,3> bnd_flux_net;
 };
-#endif
+
+#endif // RTE_USE_CUDA
+
+#endif // FLUXES_H

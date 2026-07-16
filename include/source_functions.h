@@ -29,7 +29,6 @@
 
 
 template<typename, int> class Array;
-template<typename, int> class Array_gpu;
 
 
 class Source_func_lw : public Optical_props
@@ -67,6 +66,8 @@ class Source_func_lw : public Optical_props
 
 
 #ifdef RTE_USE_CUDA
+template<typename, int> class Array_gpu;
+
 class Source_func_lw_gpu : public Optical_props_gpu
 {
     public:

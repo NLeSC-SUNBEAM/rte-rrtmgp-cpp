@@ -31,7 +31,6 @@
 
 // Forward declarations.
 template<typename, int> class Array;
-template<typename, int> class Array_gpu;
 class Optical_props_arry;
 class Optical_props_arry_gpu;
 
@@ -59,6 +58,8 @@ class Rte_sw
 
 
 #ifdef RTE_USE_CUDA
+template<typename, int> class Array_gpu;
+
 class Rte_sw_gpu
 {
     public:

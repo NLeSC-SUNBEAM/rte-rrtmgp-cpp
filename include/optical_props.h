@@ -291,6 +291,6 @@ class Optical_props_2str_gpu : public Optical_props_arry_gpu
 
         friend void add_to(Optical_props_2str_gpu& op_inout, const Optical_props_2str_gpu& op_in);
 };
-#endif
+#endif // RTE_USE_CUDA
 
-#endif
+#endif // OPTICAL_PROPS_H

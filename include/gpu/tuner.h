@@ -10,9 +10,9 @@
 #include <map>
 
 
-// #ifdef RTE_USE_CUDA
+#ifdef __CUDACC__
+
 using Tuner_map = std::map<std::string, std::pair<dim3, dim3>>;
-// #endif
 
 
 class Tuner
@@ -366,4 +366,7 @@ void run_kernel_compile_time(
 {
     (run_i<Func, Is>(js, ks, grid, block, args...), ...);
 }
-#endif
+
+#endif // __CUDACC__
+
+#endif // TUNER_H

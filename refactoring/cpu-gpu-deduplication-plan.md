@@ -8,6 +8,19 @@ This plan has been updated to reflect two changes made by `cmake-modernization-p
 - The CUDA build option was renamed from the bare `USECUDA` variable to a proper `option(RTE_USE_CUDA ...)`; every `#ifdef`/`-D` below uses the new name.
 - `include_kernels_cuda/` was merged into `include/gpu/` (which now also holds `tools_gpu.h`, `mem_pool_gpu.h`, and `tuner.h`, formerly loose in `include/`); every path below reflects the new location.
 
+## 0. Preparatory hardening completed before migration starts
+
+None of this is the template-based unification itself (§5 below is still "not started") — it's groundwork on the *current* dual-class headers that the migration in §3 will be written against, done because the file moves above surfaced real gaps in how the CPU/GPU split was guarded. Status: done.
+
+**0.1 The 3-tier guard pattern is now consistently applied across `include/`.** Audited every header in `include/` and `include/gpu/` against three preprocessor states: `RTE_USE_CUDA` undefined (CPU-only, `_gpu` types don't exist), `RTE_USE_CUDA` defined + `__CUDACC__` undefined (a host `g++` translation unit inside a CUDA-enabled build — this happens because `RTE_USE_CUDA` propagates to every `src/*.cpp` file too, not just `.cu` files), and both defined (`nvcc` compiling a `.cu` file). Findings:
+- `array.h` is the *only* header with inline, header-only method bodies containing literal CUDA API calls (`cudaMemcpy`, `dim3`, kernel launches), so it's the only one that needs all three tiers: `Array_gpu`'s forward declaration is unconditional, its full class definition is gated behind `#ifdef RTE_USE_CUDA`, and the individual CUDA runtime calls inside its methods are further gated behind `#ifdef __CUDACC__`. Two methods (`Array(const Array_gpu&)`, `Array_gpu::operator()`) that are reachable in the middle tier but can't do real work there now `throw std::runtime_error` instead of silently zero-filling data or returning an uninitialized value.
+- The other ten dual headers (`aerosol_optics.h`, `cloud_optics.h`, `fluxes.h`, `gas_concs.h`, `gas_optics.h`, `gas_optics_rrtmgp.h`, `optical_props.h`, `rte_lw.h`, `rte_sw.h`, `source_functions.h`) only need the single `#ifdef RTE_USE_CUDA` tier around their whole `_gpu` class, since their `_gpu` methods are declaration-only (implemented in `.cu` files) — confirmed by grepping all ten for CUDA-specific syntax and finding none. `fluxes.h` had this guard accidentally commented out (`Fluxes_gpu` was unconditionally compiled); fixed.
+- `gas_concs.h`'s pattern of scoping its own local `Array_gpu` forward declaration *inside* its `#ifdef RTE_USE_CUDA` block (rather than unconditionally at file scope) is now applied consistently to `rte_lw.h`, `rte_sw.h`, and `source_functions.h` too, which previously declared it unconditionally even though their actual `Array_gpu` usage was already confined to their own guarded `_gpu` classes.
+
+**0.2 Bug found and fixed: dead, unguarded `Array_gpu` members in `gas_optics_rrtmgp.h`.** Tightening `array.h`'s guard (making `Array_gpu` incomplete when `RTE_USE_CUDA` is off, instead of always complete) turned a latent bug into a hard CPU-build compile error: the *CPU* `Gas_optics_rrtmgp` class declared two unconditional `Array_gpu`-typed members, `solar_source_g` and `krayl_test`, duplicating (and never used instead of) the correctly-guarded members already on the `_gpu` sibling class. Grepped the whole repo and confirmed neither was read anywhere — they were leftover/dead. Deleted. This is the concrete version of the risk already called out in §7 ("`Array_t<Float,3>` silently resolves to the wrong backend") — worth keeping in mind once §5 migration starts turning these same classes into templates.
+
+**0.3 `include/gpu/` cleanup.** `tuner.h` used `dim3` unconditionally throughout with no compile-time protection (only an abandoned, commented-out guard) — relying entirely on the fact that every current consumer happens to be a `.cu` file. Wrapped its whole body in `#ifdef __CUDACC__`, matching `tools_gpu.h`'s existing self-guarding style. `array_subset.h` (a near-duplicate of the `Subset_data`/`subset_kernel`/`fill_kernel` block that already lives, correctly guarded, inside `array.h`) had zero consumers anywhere in the repo — confirmed via exact-symbol grep, not just filename search — and was deleted.
+
 ## 1. Problem recap
 
 The CPU and GPU "two-stream" implementations are two independently maintained copies of the same nine physics classes (`Optical_props`, `Cloud_optics`, `Aerosol_optics`, `Gas_optics_rrtmgp`, `Rte_lw`, `Rte_sw`, `Fluxes`, `Gas_concs`, `Source_functions`), distinguished only by a `_gpu` suffix and by which `Array` type they store (`Array<T,N>` vs `Array_gpu<T,N>`). Measured overlap (`diff -u`, non-blank/non-comment lines that differ):
@@ -366,7 +379,9 @@ include/
 
 include/gpu/
   backend_gpu.h                      new
-  (existing *_kernels_cuda.h, tools_gpu.h, mem_pool_gpu.h, tuner.h unchanged)
+  (existing *_kernels_cuda.h, tools_gpu.h, mem_pool_gpu.h unchanged;
+   tuner.h now self-guards its CUDA-only body under #ifdef __CUDACC__ -- see §0.3;
+   array_subset.h removed as dead code -- see §0.3)
 
 src/
   aerosol_optics.cpp                 deleted (folded into .tpp)

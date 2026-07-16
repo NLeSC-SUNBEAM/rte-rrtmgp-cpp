@@ -213,10 +213,8 @@ class Gas_optics_rrtmgp : public Gas_optics
         Array<Float,1> solar_source_facular;
         Array<Float,1> solar_source_sunspot;
         Array<Float,1> solar_source;
-        Array_gpu<Float,1> solar_source_g;
 
         Array<Float,4> krayl;
-        Array_gpu<Float,4> krayl_test;
 
         int get_ngas() const { return this->gas_names.dim(1); }
 

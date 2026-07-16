@@ -6,6 +6,8 @@
 #endif
 #include <cstdio>
 
+#ifdef __CUDACC__
+
 #define cuda_safe_call(err) Tools_gpu::__cuda_safe_call(err, __FILE__, __LINE__)
 #define cuda_check_error()  Tools_gpu::__cuda_check_error(__FILE__, __LINE__)
 #define cuda_check_memory() Tools_gpu::__cuda_check_memory(__FILE__, __LINE__)
@@ -107,4 +109,6 @@ namespace Tools_gpu
         return dim3(grid_x, grid_y, grid_z);
     }
 }
-#endif
+#endif // __CUDACC__
+
+#endif // TOOLS_GPU_H

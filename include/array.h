@@ -32,8 +32,9 @@
 #include <fstream>
 #include <utility>
 
-#ifdef __CUDACC__
 #include "tools_gpu.h"
+
+#ifdef RTE_USE_CUDA
 template<typename T, int N> class Array_gpu;
 #endif
 

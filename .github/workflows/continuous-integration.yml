@@ -66,6 +66,15 @@ jobs:
     container: nvidia/cuda:12.4.1-devel-ubuntu22.04
 
     steps:
+    # actions/checkout needs git >= 2.18 on PATH to do a real clone; without
+    # it, it silently falls back to downloading a tarball via the GitHub
+    # REST API, which doesn't support the submodules input at all. The
+    # nvidia/cuda image has no git, so install it before checking out.
+    - name: Install git
+      run: |
+        apt-get update -qq
+        apt-get install -y --no-install-recommends git ca-certificates
+
     - uses: actions/checkout@v6
       with:
         submodules: recursive

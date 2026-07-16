@@ -3,6 +3,7 @@ on: [push, pull_request, workflow_dispatch]
 
 jobs:
   CI:
+    name: "Build (CPU)"
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
@@ -54,4 +55,34 @@ jobs:
       run: |
         cd build
         ctest --output-on-failure
+
+  build-cuda:
+    name: Build (CUDA)
+    runs-on: ubuntu-22.04
+    # Official NVIDIA devel image: ships nvcc plus the CUDA math libraries
+    # (cuRAND etc.) needed to link, without the slow toolkit install a bare
+    # runner would need. No GPU is required to compile -- this job only
+    # builds, it does not run the test suite.
+    container: nvidia/cuda:12.4.1-devel-ubuntu22.04
+
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        submodules: recursive
+
+    - name: Install dependencies
+      run: |
+        apt-get update -qq
+        apt-get install -y --no-install-recommends gcc g++ gfortran libnetcdf-dev cmake libboost-dev
+
+    - name: Configure
+      run: |
+        mkdir build
+        cd build
+        cmake -DSYST=ubuntu_22lts -DRTE_USE_CUDA=ON ..
+
+    - name: Build
+      run: |
+        cd build
+        cmake --build .
 

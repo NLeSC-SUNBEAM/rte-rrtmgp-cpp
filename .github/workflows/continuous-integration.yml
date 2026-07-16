@@ -34,30 +34,24 @@ jobs:
         sudo apt-get install ${{ matrix.cxx-compiler }}
         pip3 install --user numpy netcdf4 dask[array] xarray
 
-    - name: Build 
+    - name: Build
       run: |
         mkdir build
         cd build
         cmake -DSYST=ubuntu_22lts ..
-        make
+        cmake --build .
+
+    - name: Stage test data
+      run: |
+        cd rfmip
+        ./make_links.sh
+        ln -sf ../build/test_rte_rrtmgp .
+        cd ../allsky
+        ./make_links.sh
+        ln -sf ../build/test_rte_rrtmgp .
 
     - name: Run tests
       run: |
-        cd rfmip
-        ./make_links.sh
-        ln -sf ../build/test_rte_rrtmgp .
-        python3 rfmip_init.py
-        python3 rfmip_run.py
-        cd ../allsky
-        ./make_links.sh
-        ln -sf ../build/test_rte_rrtmgp .
-        python3 allsky_init.py
-        python3 allsky_run.py
-
-    - name: Check results
-      run: |
-        cd rfmip
-        python3 compare-to-reference.py --ref_dir ../rrtmgp-data/examples/rfmip-clear-sky/reference --tst_dir . --var rld rlu rsd rsu --file r??_Efx_RTE-RRTMGP-181204_rad-irf_r1i1p1f1_gn.nc --failure_threshold=5.8e-2
-        cd ../allsky
-        python3 allsky_check.py --failure_threshold=5.8e-2
+        cd build
+        ctest --output-on-failure
 

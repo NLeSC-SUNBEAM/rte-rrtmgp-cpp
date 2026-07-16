@@ -232,7 +232,9 @@ action needed now.
 
 Implemented as designed (commit `e2781f0`): `rte_rrtmgp_headers` (carries
 `include/`, plus `RTE_USE_CUDA`/`RTE_USE_SP` compile definitions),
-`rte_rrtmgp_cuda_headers` (`include_kernels_cuda/`), and a third interface
+`rte_rrtmgp_cuda_headers` (`include_kernels_cuda/`, later moved to
+`include/gpu/` as part of the CPU/GPU header consolidation — see
+`cpu-gpu-deduplication-plan.md`), and a third interface
 library not in the original snippet — `rte_rrtmgp_rt_headers` (carries
 `include_rt/` + `include_rt_kernels/`, plus `RTE_SAFE_RNG` — needed because
 `src_cuda_rt`/`src_kernels_cuda_rt` had the same directory-scoped-include

@@ -1,8 +1,12 @@
 # CPU/GPU deduplication refactoring plan
 
 Status: proposed, not started
-Scope: `src/` + `include/` (CPU) and `src_cuda/` + `src_kernels_cuda/` + `include_kernels_cuda/` (GPU two-stream) only.
+Scope: `src/` + `include/` (CPU) and `src_cuda/` + `src_kernels_cuda/` + `include/gpu/` (GPU two-stream) only.
 Out of scope: the ray tracer (`src_cuda_rt/`, `include_rt/`, `src_kernels_cuda_rt/`, `include_rt_kernels/`) and its test drivers (`radiation_solver_rt.cu`, `radiation_solver_bw.cu`). Do not touch those directories as part of this effort.
+
+This plan has been updated to reflect two changes made by `cmake-modernization-plan.md` (now fully implemented, see that document) since this plan was first drafted:
+- The CUDA build option was renamed from the bare `USECUDA` variable to a proper `option(RTE_USE_CUDA ...)`; every `#ifdef`/`-D` below uses the new name.
+- `include_kernels_cuda/` was merged into `include/gpu/` (which now also holds `tools_gpu.h`, `mem_pool_gpu.h`, and `tuner.h`, formerly loose in `include/`); every path below reflects the new location.
 
 ## 1. Problem recap
 
@@ -29,7 +33,7 @@ Additionally, five CPU `.cpp` files (`optical_props.cpp`, `gas_optics_rrtmgp.cpp
 Reduce the CPU/GPU physics classes to **one implementation per class**, parameterized on a small "backend" policy, while:
 
 - Keeping the existing public class names (`Optical_props`, `Optical_props_gpu`, `Cloud_optics`, `Cloud_optics_gpu`, ...) unchanged, so every call site in `src_test/`, `rfmip/`, `allsky/`, `rcemip/` keeps compiling with zero changes.
-- Keeping CPU-only builds (`-DUSECUDA=OFF`, no `nvcc` available) working exactly as they do today — no new hard dependency on CUDA in `src/`.
+- Keeping CPU-only builds (`-DRTE_USE_CUDA=OFF`, the default, no `nvcc` available) working exactly as they do today — no new hard dependency on CUDA in `src/`.
 - Keeping the CPU and GPU static libraries (`rte_rrtmgp`, `rte_rrtmgp_cuda`) as separate link targets, as they are today.
 - Not changing the numerics. This is a structural refactor; RFMIP/all-sky/RCEMIP outputs must stay within today's `--failure_threshold` after every step.
 
@@ -57,7 +61,7 @@ struct Backend_cpu
 #endif
 ```
 
-`include_kernels_cuda/backend_gpu.h` (new, only ever included from `src_cuda/*.cu` and `include/*.h` under `#ifdef USECUDA`):
+`include/gpu/backend_gpu.h` (new, only ever included from `src_cuda/*.cu` and `include/*.h` under `#ifdef RTE_USE_CUDA`):
 
 ```cpp
 #ifndef BACKEND_GPU_H
@@ -79,7 +83,7 @@ This is deliberately the *only* new abstraction at the array level — `Array`/`
 
 ### 3.2 Kernel bridge: one namespace per backend, identical signatures
 
-The GPU side already exposes clean, by-value kernel-launcher namespaces in `include_kernels_cuda/*.h` (e.g. `Optical_props_kernels_cuda::increment_1scalar_by_1scalar(int ncol, int nlay, int ngpt, Float* tau_inout, const Float* tau_in)`), implemented in `src_kernels_cuda/*_launchers.cu`. Keep these as-is — they become the GPU half of the bridge.
+The GPU side already exposes clean, by-value kernel-launcher namespaces in `include/gpu/*.h` (e.g. `Optical_props_kernels_cuda::increment_1scalar_by_1scalar(int ncol, int nlay, int ngpt, Float* tau_inout, const Float* tau_in)`), implemented in `src_kernels_cuda/*_launchers.cu`. Keep these as-is — they become the GPU half of the bridge.
 
 For the CPU side, replace the five scattered file-local `rrtmgp_kernel_launcher` namespaces with **one header per physics class** under a new `include/kernel_launchers_cpu/` directory, each wrapping the relevant `rrtmgp_kernels::` Fortran calls with the identical by-value signature the GPU namespace already uses. Example, replacing the `rrtmgp_kernel_launcher` block currently duplicated inside `src/optical_props.cpp`:
 
@@ -149,7 +153,7 @@ namespace Optical_props_kernels_cpu
 #endif
 ```
 
-This mirrors `include_kernels_cuda/optical_props_kernels_cuda.h` function-for-function. `inline` keeps these header-only (no new `.cpp` to add to `src/CMakeLists.txt`).
+This mirrors `include/gpu/optical_props_kernels_cuda.h` function-for-function. `inline` keeps these header-only (no new `.cpp` to add to `src/CMakeLists.txt`).
 
 Then extend the backend policy to carry the kernel namespace:
 
@@ -189,7 +193,7 @@ Worked example for `Optical_props` (the base class every other physics class der
 #include "array.h"
 #include "types.h"
 #include "backend_cpu.h"
-#ifdef USECUDA
+#ifdef RTE_USE_CUDA
 #include "backend_gpu.h"
 #endif
 
@@ -246,7 +250,7 @@ using Optical_props_arry = Optical_props_arry_tmpl<Backend_cpu>;
 using Optical_props_1scl = Optical_props_1scl_tmpl<Backend_cpu>;
 using Optical_props_2str = Optical_props_2str_tmpl<Backend_cpu>;
 
-#ifdef USECUDA
+#ifdef RTE_USE_CUDA
 using Optical_props_gpu = Optical_props_tmpl<Backend_gpu>;
 using Optical_props_arry_gpu = Optical_props_arry_tmpl<Backend_gpu>;
 using Optical_props_1scl_gpu = Optical_props_1scl_tmpl<Backend_gpu>;
@@ -331,7 +335,7 @@ Notes on the design decisions embedded in this example:
 
 Not every class is a pure copy. Two recurring asymmetries showed up while surveying the pairs; the template needs an escape hatch for both rather than forcing 100% unification:
 
-1. **Backend-only constructors/conversions.** `Gas_concs_gpu` has a constructor `Gas_concs_gpu(const Gas_concs&)` (host→device upload) that has no CPU-side equivalent. Keep these as non-template, backend-specific free functions or constructors declared only inside `#ifdef USECUDA`, outside the shared template body — don't try to make the CPU class accept a no-op version of the same constructor.
+1. **Backend-only constructors/conversions.** `Gas_concs_gpu` has a constructor `Gas_concs_gpu(const Gas_concs&)` (host→device upload) that has no CPU-side equivalent. Keep these as non-template, backend-specific free functions or constructors declared only inside `#ifdef RTE_USE_CUDA`, outside the shared template body — don't try to make the CPU class accept a no-op version of the same constructor.
 2. **CPU-only I/O / bookkeeping methods.** A few CPU methods (e.g. `Gas_concs::set_vmr(name, Float)` scalar overload) exist because the CPU path reads scalars from NetCDF/TOML config directly, where the GPU path always receives a pre-expanded `Array`. Leave these as CPU-only additions on `Backend_cpu`'s instantiation, or as free functions taking `Optical_props&`-like references — do not force them into the shared template just for symmetry.
 
 When a class hits one of these, prefer: shared template holds everything that is genuinely backend-symmetric; the small asymmetric surface is added back as a non-template member guarded by `if constexpr` or simply omitted from the template and re-added on the `Backend_cpu`/`Backend_gpu` alias via a thin wrapper subclass only if strictly necessary. Do not let one asymmetric method block templating the other 90% of a class.
@@ -360,9 +364,9 @@ include/
     rte_lw_kernels_cpu.h
     rte_sw_kernels_cpu.h
 
-include_kernels_cuda/
+include/gpu/
   backend_gpu.h                      new
-  (existing *_kernels_cuda.h unchanged)
+  (existing *_kernels_cuda.h, tools_gpu.h, mem_pool_gpu.h, tuner.h unchanged)
 
 src/
   aerosol_optics.cpp                 deleted (folded into .tpp)
@@ -408,22 +412,18 @@ Each step is its own PR. Do not batch multiple classes into one PR — the value
 
 1. Build both configurations from a clean `build/` directory:
    ```bash
-   cmake -DSYST=<your config> -DCMAKE_BUILD_TYPE=DEBUG .. && make
-   cmake -DSYST=<your config> -DUSECUDA=ON .. && make
+   cmake -DSYST=<your config> -DCMAKE_BUILD_TYPE=DEBUG .. && cmake --build .
+   cmake -DSYST=<your config> -DRTE_USE_CUDA=ON .. && cmake --build .
    ```
    A DEBUG CPU build first, to catch any newly-introduced undefined behavior (e.g. uninitialized `Array_t` reads) that RELEASE would optimize past.
-2. Run the existing regression suite for both builds:
+2. Run the existing regression suite for both builds. `rfmip/` and `allsky/` are now wired up as `ctest` targets (`cmake-modernization-plan.md` §5 step 4) — after staging test data once (`./make_links.sh` + linking `test_rte_rrtmgp` in each directory, as documented in each directory's README), running
    ```bash
-   cd rfmip && python3 rfmip_init.py && python3 rfmip_run.py && \
-     python3 compare-to-reference.py --ref_dir ../rrtmgp-data/examples/rfmip-clear-sky/reference \
-       --tst_dir . --var rld rlu rsd rsu --file 'r??_Efx_RTE-RRTMGP-181204_rad-irf_r1i1p1f1_gn.nc' \
-       --failure_threshold=5.8e-2
-   cd ../allsky && python3 allsky_init.py && python3 allsky_run.py && \
-     python3 allsky_check.py --failure_threshold=5.8e-2
+   ctest --output-on-failure
    ```
-   Run `rcemip` too if the migrated class is exercised by it (`Aerosol_optics`, `Cloud_optics`, `Gas_optics_rrtmgp` all are).
+   from `build/` runs `rfmip_init` → `rfmip_run` → `rfmip_check` and `allsky_init` → `allsky_run` → `allsky_check` in dependency order, at the same `--failure_threshold=5.8e-2` the CI workflow uses. This replaces manually invoking `rfmip_init.py`/`rfmip_run.py`/`compare-to-reference.py`/`allsky_init.py`/`allsky_run.py`/`allsky_check.py` by hand, though those scripts still work standalone if you want to run just one of the two suites (`ctest -R rfmip` / `ctest -R allsky` also works).
+   Run `rcemip` too if the migrated class is exercised by it (`Aerosol_optics`, `Cloud_optics`, `Gas_optics_rrtmgp` all are) — `rcemip` has no `ctest` wrapper, run it manually as before.
 3. Since this refactor must not change numerics, prefer diffing CPU-build output against the pre-refactor CPU-build output directly (not just against the reference within threshold) for at least the first few migrations, to build confidence the template produces bit-identical results. A quick way: keep a copy of `build/` outputs from `main` before starting, and `nccmp` or `cdo diffn` the new outputs against them.
-4. Confirm both `rte_rrtmgp` and `rte_rrtmgp_cuda` static libraries still build without either pulling in the other backend's headers unintentionally (a CPU-only build must never require `nvcc`/`-DUSECUDA`). Simplest check: build the CPU-only configuration on a machine/container without CUDA installed, or grep the CPU build's compile commands for accidental `-DUSECUDA`.
+4. Confirm both `rte_rrtmgp` and `rte_rrtmgp_cuda` static libraries still build without either pulling in the other backend's headers unintentionally (a CPU-only build must never require `nvcc`/`-DRTE_USE_CUDA`). Simplest check: build the CPU-only configuration on a machine/container without CUDA installed, or grep the CPU build's compile commands for accidental `-DRTE_USE_CUDA`. The CI workflow's `build-cuda` job (`.github/workflows/continuous-integration.yml`) already builds the CUDA configuration on every push — a green run there covers the CUDA half of this check without needing local `nvcc`. (This job isn't documented in `cmake-modernization-plan.md`, which predates it — it was added afterward directly to the workflow file.)
 
 ## 7. Risks and mitigations
 

@@ -157,7 +157,7 @@ endif()
 
 if(RTE_USE_CUDA)
   add_library(rte_rrtmgp_cuda_headers INTERFACE)
-  target_include_directories(rte_rrtmgp_cuda_headers INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include_kernels_cuda")
+  target_include_directories(rte_rrtmgp_cuda_headers INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include/gpu")
 
   add_library(rte_rrtmgp_rt_headers INTERFACE)
   target_include_directories(rte_rrtmgp_rt_headers INTERFACE

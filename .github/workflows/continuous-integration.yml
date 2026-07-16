@@ -79,10 +79,20 @@ jobs:
       with:
         submodules: recursive
 
+    # actions/checkout (running as the runner's user) and the rest of the
+    # steps (running as this container's default user) disagree on who
+    # owns the checked-out files, which git treats as a security risk by
+    # default and refuses to touch. Only affects the "git describe" call
+    # CMakeLists.txt makes for the build's version string -- harmless
+    # either way since that call already falls back to "not available" on
+    # failure -- but this gets a real one instead.
+    - name: Mark the workspace as a safe git directory
+      run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
     - name: Install dependencies
       run: |
         apt-get update -qq
-        apt-get install -y --no-install-recommends gcc g++ gfortran libnetcdf-dev cmake libboost-dev
+        apt-get install -y --no-install-recommends gcc g++ gfortran libnetcdf-dev cmake libboost-dev python3
 
     - name: Configure
       run: |

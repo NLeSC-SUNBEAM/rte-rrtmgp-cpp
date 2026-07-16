@@ -3,6 +3,19 @@
 #
 cmake_minimum_required (VERSION 3.18)
 
+# Boost's own exported CMake config isn't guaranteed to exist on every
+# machine this project builds on (e.g. EasyBuild-built Boost on das6 /
+# snellius, built via b2 rather than CMake), so keep using CMake's bundled
+# FindBoost.cmake module rather than requiring find_package(Boost) to find a
+# Boost-provided config file. This is already the default behavior on
+# CMake >= 3.30 when the policy is left unset, so it changes nothing; it
+# just silences that version's CMP0167 dev warning ("The FindBoost module
+# is removed") by making the choice explicit. Guarded because CMP0167 does
+# not exist prior to CMake 3.30.
+if(POLICY CMP0167)
+  cmake_policy(SET CMP0167 OLD)
+endif()
+
 option(RTE_USE_CUDA "Build the CUDA (GPU) libraries and executables" OFF)
 option(RTE_USE_SP "Use single precision (32-bit) floats instead of double" OFF)
 option(RTE_USE_MPI "Use MPI compiler wrappers (mpicc/mpicxx/mpif90)" OFF)

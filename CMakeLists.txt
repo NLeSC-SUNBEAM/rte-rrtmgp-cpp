@@ -161,7 +161,11 @@ if(RTE_USE_CUDA)
 
   add_library(rte_rrtmgp_rt_headers INTERFACE)
   target_include_directories(rte_rrtmgp_rt_headers INTERFACE
-    "${CMAKE_CURRENT_SOURCE_DIR}/include_rt" "${CMAKE_CURRENT_SOURCE_DIR}/include_rt_kernels")
+    "${CMAKE_CURRENT_SOURCE_DIR}/include_rt" "${CMAKE_CURRENT_SOURCE_DIR}/include_rt_kernels"
+    # tools_gpu.h / tuner.h in include/gpu are shared CUDA infrastructure,
+    # not two-stream-specific -- src_kernels_cuda_rt/src_cuda_rt use them
+    # directly (bare #include) without linking rte_rrtmgp_cuda_headers.
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/gpu")
   if(RTE_SAFE_RNG)
     target_compile_definitions(rte_rrtmgp_rt_headers INTERFACE RTE_SAFE_RNG)
   endif()

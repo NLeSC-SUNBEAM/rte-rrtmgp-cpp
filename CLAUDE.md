@@ -18,7 +18,7 @@ make
 cmake -DSYST=<config> -DRTE_USE_CUDA=ON ..
 
 # Single precision build
-cmake -DSYST=<config> -DUSESP=ON ..
+cmake -DSYST=<config> -DRTE_USE_SP=ON ..
 
 # Debug build
 cmake -DSYST=<config> -DCMAKE_BUILD_TYPE=DEBUG ..

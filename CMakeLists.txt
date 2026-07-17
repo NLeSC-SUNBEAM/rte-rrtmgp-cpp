@@ -27,6 +27,10 @@ if(RTE_USE_CUDA AND RTE_USE_HIP)
   message(FATAL_ERROR "RTE_USE_CUDA and RTE_USE_HIP are mutually exclusive; enable only one.")
 endif()
 
+if(RTE_USE_KMM AND NOT (RTE_USE_CUDA OR RTE_USE_HIP))
+  message(FATAL_ERROR "RTE_USE_KMM requires either RTE_USE_CUDA or RTE_USE_HIP to be enabled.")
+endif()
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/config ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 

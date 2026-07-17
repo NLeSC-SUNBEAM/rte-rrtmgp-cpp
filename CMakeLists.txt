@@ -17,9 +17,15 @@ if(POLICY CMP0167)
 endif()
 
 option(RTE_USE_CUDA "Build the CUDA (GPU) libraries and executables" OFF)
+option(RTE_USE_HIP "Build the HIP (AMD GPU) libraries and executables" OFF)
 option(RTE_USE_SP "Use single precision (32-bit) floats instead of double" OFF)
 option(RTE_USE_MPI "Use MPI compiler wrappers (mpicc/mpicxx/mpif90)" OFF)
 option(RTE_SAFE_RNG "Use a safer but slower pseudo-RNG initialization" OFF)
+option(RTE_USE_KMM "Build against KMM (external/kmm) for GPU portability and multi-GPU support" OFF)
+
+if(RTE_USE_CUDA AND RTE_USE_HIP)
+  message(FATAL_ERROR "RTE_USE_CUDA and RTE_USE_HIP are mutually exclusive; enable only one.")
+endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/config ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
@@ -66,6 +72,12 @@ if(RTE_USE_CUDA)
   message(STATUS "CUDA: Enabled.")
 else()
   message(STATUS "CUDA: Disabled.")
+endif()
+
+if(RTE_USE_HIP)
+  message(STATUS "HIP: Enabled.")
+else()
+  message(STATUS "HIP: Disabled.")
 endif()
 
 if (RTE_SAFE_RNG)
@@ -140,6 +152,20 @@ if(NOT NETCDF_LIB_C)
   find_package(NetCDF REQUIRED)
   find_package(HDF5 REQUIRED COMPONENTS C)
   find_package(Boost REQUIRED)
+endif()
+
+# KMM (https://github.com/NLeSC/kmm) provides GPU portability (CUDA/HIP) and
+# multi-GPU support. Vendored as the "external/kmm" submodule. Off by default
+# since it pulls in its own fmt/spdlog submodule dependencies and is not yet
+# used by any target; its CUDA/HIP backend follows RTE_USE_CUDA/RTE_USE_HIP
+# (which are themselves mutually exclusive, checked above).
+if(RTE_USE_KMM)
+  message(STATUS "KMM: Enabled.")
+  set(KMM_USE_CUDA ${RTE_USE_CUDA} CACHE BOOL "Build the KMM CUDA backend" FORCE)
+  set(KMM_USE_HIP ${RTE_USE_HIP} CACHE BOOL "Build the KMM HIP backend" FORCE)
+  add_subdirectory(external/kmm)
+else()
+  message(STATUS "KMM: Disabled.")
 endif()
 
 # Shared INTERFACE "libraries" that carry include directories and compile

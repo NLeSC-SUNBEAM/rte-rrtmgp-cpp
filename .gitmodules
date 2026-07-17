@@ -4,3 +4,7 @@
 [submodule "rrtmgp-data"]
 	path = rrtmgp-data
 	url = https://github.com/earth-system-radiation/rrtmgp-data
+[submodule "external/kmm"]
+	path = external/kmm
+	url = https://github.com/NLeSC/kmm
+	branch = dev

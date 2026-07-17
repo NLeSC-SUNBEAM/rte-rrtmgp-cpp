@@ -163,6 +163,16 @@ if(RTE_USE_KMM)
   message(STATUS "KMM: Enabled.")
   set(KMM_USE_CUDA ${RTE_USE_CUDA} CACHE BOOL "Build the KMM CUDA backend" FORCE)
   set(KMM_USE_HIP ${RTE_USE_HIP} CACHE BOOL "Build the KMM HIP backend" FORCE)
+
+  # KMM's own build-type/development options are not relevant to consuming
+  # it as a library here, so they are pinned and re-forced on every
+  # configure -- setting them on the command line has no effect.
+  set(KMM_STATIC ON CACHE BOOL "Build a static library" FORCE)
+  set(KMM_BUILD_BENCHMARKS OFF CACHE BOOL "Build benchmarks" FORCE)
+  set(KMM_BUILD_EXAMPLES OFF CACHE BOOL "Build examples" FORCE)
+  set(KMM_BUILD_TESTS OFF CACHE BOOL "Build tests" FORCE)
+  set(KMM_ENABLE_LINTER OFF CACHE BOOL "Enable clang-tidy linter" FORCE)
+
   add_subdirectory(external/kmm)
 else()
   message(STATUS "KMM: Disabled.")

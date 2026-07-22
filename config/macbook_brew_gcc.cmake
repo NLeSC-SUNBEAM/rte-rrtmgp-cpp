@@ -27,5 +27,3 @@ set(LIBS m z curl)
 
 add_definitions(-DRESTRICTKEYWORD=__restrict__)
 add_definitions(-DRTE_USE_CBOOL)
-#add_definitions(-DRTE_RRTMGP_GPU_MEMPOOL_OWN)
-#add_definitions(-DRTE_RRTMGP_GPU_MEMPOOL_CUDA)

@@ -11,3 +11,6 @@ target_link_libraries(rte_rrtmgp_cuda
 if(TARGET Boost::boost)
   target_link_libraries(rte_rrtmgp_cuda PRIVATE Boost::boost)
 endif()
+if(RTE_USE_KMM)
+  target_link_libraries(rte_rrtmgp_cuda PUBLIC kmm)
+endif()

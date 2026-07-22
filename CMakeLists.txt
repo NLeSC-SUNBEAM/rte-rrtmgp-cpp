@@ -22,6 +22,15 @@ option(RTE_USE_SP "Use single precision (32-bit) floats instead of double" OFF)
 option(RTE_USE_MPI "Use MPI compiler wrappers (mpicc/mpicxx/mpif90)" OFF)
 option(RTE_SAFE_RNG "Use a safer but slower pseudo-RNG initialization" OFF)
 option(RTE_USE_KMM "Build against KMM (external/kmm) for GPU portability and multi-GPU support" OFF)
+option(RTE_DEBUG_CHECKS "Enable extra GPU runtime checks" OFF)
+
+set(RTE_GPU_MEMPOOL "NONE" CACHE STRING
+  "GPU memory pool strategy for CUDA allocations: NONE (plain cudaMalloc/cudaFree), NATIVE (CUDA's built-in mempool via cudaMallocAsync/cudaFreeAsync), or OWN (the custom Memory_pool_gpu allocator). Only valid when RTE_USE_CUDA is enabled.")
+set_property(CACHE RTE_GPU_MEMPOOL PROPERTY STRINGS NONE NATIVE OWN)
+
+if(NOT RTE_GPU_MEMPOOL MATCHES "^(NONE|NATIVE|OWN)$")
+  message(FATAL_ERROR "RTE_GPU_MEMPOOL=${RTE_GPU_MEMPOOL} is invalid; must be one of NONE, NATIVE, OWN.")
+endif()
 
 if(RTE_USE_CUDA AND RTE_USE_HIP)
   message(FATAL_ERROR "RTE_USE_CUDA and RTE_USE_HIP are mutually exclusive; enable only one.")
@@ -29,6 +38,14 @@ endif()
 
 if(RTE_USE_KMM AND NOT (RTE_USE_CUDA OR RTE_USE_HIP))
   message(FATAL_ERROR "RTE_USE_KMM requires either RTE_USE_CUDA or RTE_USE_HIP to be enabled.")
+endif()
+
+if(NOT RTE_GPU_MEMPOOL STREQUAL "NONE" AND NOT RTE_USE_CUDA)
+  message(FATAL_ERROR "RTE_GPU_MEMPOOL=${RTE_GPU_MEMPOOL} requires RTE_USE_CUDA to be enabled.")
+endif()
+
+if(RTE_GPU_MEMPOOL STREQUAL "OWN" AND RTE_USE_KMM)
+  message(FATAL_ERROR "RTE_GPU_MEMPOOL=OWN is incompatible with RTE_USE_KMM; use RTE_GPU_MEMPOOL=NONE or NATIVE instead.")
 endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/config ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -82,6 +99,20 @@ if(RTE_USE_HIP)
   message(STATUS "HIP: Enabled.")
 else()
   message(STATUS "HIP: Disabled.")
+endif()
+
+message(STATUS "GPU memory pool: ${RTE_GPU_MEMPOOL}")
+if(RTE_GPU_MEMPOOL STREQUAL "NATIVE")
+  add_definitions(-DRTE_RRTMGP_GPU_MEMPOOL_NATIVE)
+elseif(RTE_GPU_MEMPOOL STREQUAL "OWN")
+  add_definitions(-DRTE_RRTMGP_GPU_MEMPOOL_OWN)
+endif()
+
+if(RTE_DEBUG_CHECKS)
+  message(STATUS "GPU debug checks: Enabled.")
+  add_definitions(-DGPUCHECKS)
+else()
+  message(STATUS "GPU debug checks: Disabled.")
 endif()
 
 if (RTE_SAFE_RNG)
@@ -165,6 +196,7 @@ endif()
 # (which are themselves mutually exclusive, checked above).
 if(RTE_USE_KMM)
   message(STATUS "KMM: Enabled.")
+  add_definitions(-DRTE_USE_KMM)
   set(KMM_USE_CUDA ${RTE_USE_CUDA} CACHE BOOL "Build the KMM CUDA backend" FORCE)
   set(KMM_USE_HIP ${RTE_USE_HIP} CACHE BOOL "Build the KMM HIP backend" FORCE)
 

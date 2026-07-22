@@ -8,3 +8,6 @@ FILE(GLOB sourcefiles CONFIGURE_DEPENDS
 add_library(rte_rrtmgp_kernels_cuda STATIC ${sourcefiles})
 target_include_directories(rte_rrtmgp_kernels_cuda SYSTEM PRIVATE ${INCLUDE_DIRS})
 target_link_libraries(rte_rrtmgp_kernels_cuda PRIVATE rte_rrtmgp_headers rte_rrtmgp_cuda_headers)
+if(RTE_USE_KMM)
+  target_link_libraries(rte_rrtmgp_kernels_cuda PRIVATE kmm)
+endif()

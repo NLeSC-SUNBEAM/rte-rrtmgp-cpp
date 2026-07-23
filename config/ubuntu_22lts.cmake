@@ -29,4 +29,14 @@ if(RTE_USE_CUDA)
   set(USER_CUDA_FLAGS_DEBUG "-Xptxas -O0 -g -G")
 endif()
 
+if(RTE_USE_HIP)
+  # gfx90a (MI200-series) is just a reasonable default for compile-only CI
+  # (no real GPU needed) -- adjust for whatever hardware this actually
+  # targets.
+  set(CMAKE_HIP_ARCHITECTURES gfx90a)
+  set(USER_HIP_FLAGS "-std=c++17")
+  set(USER_HIP_FLAGS_RELEASE "-O3 -DNDEBUG")
+  set(USER_HIP_FLAGS_DEBUG "-O0 -g")
+endif()
+
 add_definitions(-DRTE_USE_CBOOL)

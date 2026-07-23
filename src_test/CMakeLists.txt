@@ -34,7 +34,15 @@ if(TARGET Boost::boost)
   list(APPEND rte_rrtmgp_find_pkg_libs Boost::boost)
 endif()
 
-if(RTE_USE_CUDA)
+if(RTE_USE_CUDA OR RTE_USE_HIP)
+  if(RTE_USE_HIP)
+    set_source_files_properties(
+      radiation_solver.cu test_rte_rrtmgp.cu
+      radiation_solver_rt.cu test_rte_rrtmgp_rt.cu radiation_solver_bw.cu
+      test_rt_lite.cu
+      PROPERTIES LANGUAGE HIP)
+  endif()
+
   add_executable(test_rte_rrtmgp radiation_solver.cu test_rte_rrtmgp.cu)
   target_include_directories(test_rte_rrtmgp PRIVATE "../include_test")
   target_include_directories(test_rte_rrtmgp SYSTEM PRIVATE ${INCLUDE_DIRS})

@@ -147,3 +147,46 @@ jobs:
         cd build
         cmake --build .
 
+  build-kmm-hip:
+    name: Build (KMM + HIP)
+    runs-on: ubuntu-22.04
+    # Official ROCm devel image: ships hipcc plus the ROCm libraries. Pin
+    # adjustable if a newer ROCm release is preferred. Same rationale as
+    # build-cuda/build-kmm-cuda above: compile-only, no GPU needed on the
+    # runner.
+    container: rocm/dev-ubuntu-22.04:6.2
+
+    steps:
+    # See build-cuda above: actions/checkout needs git >= 2.18 on PATH for a
+    # real clone, and the submodules input needs it too -- KMM itself
+    # vendors nested submodules (fmt, spdlog, Catch2) that "submodules:
+    # recursive" below also has to pull in.
+    - name: Install git
+      run: |
+        apt-get update -qq
+        apt-get install -y --no-install-recommends git ca-certificates
+
+    - uses: actions/checkout@v6
+      with:
+        submodules: recursive
+
+    # See build-cuda above for why this is needed.
+    - name: Mark the workspace as a safe git directory
+      run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+    - name: Install dependencies
+      run: |
+        apt-get update -qq
+        apt-get install -y --no-install-recommends gcc g++ gfortran libnetcdf-dev cmake libboost-dev python3
+
+    - name: Configure
+      run: |
+        mkdir build
+        cd build
+        cmake -DSYST=ubuntu_22lts -DRTE_USE_HIP=ON -DRTE_USE_KMM=ON ..
+
+    - name: Build
+      run: |
+        cd build
+        cmake --build .
+

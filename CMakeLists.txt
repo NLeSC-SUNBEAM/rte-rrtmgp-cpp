@@ -81,9 +81,11 @@ else()
 endif()
 
 # Start the project only after the system specific settings are loaded.
-# If CUDA is enabled, don't compile the Fortran kernels as they are not needed.
+# If CUDA or HIP is enabled, don't compile the Fortran kernels as they are not needed.
 if(RTE_USE_CUDA)
   project(rte-rrtmgp-cpp C CXX Fortran CUDA)
+elseif(RTE_USE_HIP)
+  project(rte-rrtmgp-cpp C CXX Fortran HIP)
 else()
   project(rte-rrtmgp-cpp C CXX Fortran)
 endif()
@@ -152,6 +154,15 @@ if(NOT HASCACHE)
       "Flags used by the CXX-compiler during release builds." FORCE)
   endif()
 
+  if(RTE_USE_HIP)
+    set(CMAKE_HIP_FLAGS ${USER_HIP_FLAGS} CACHE STRING
+      "Flags used by the CXX-compiler during all build types." FORCE)
+    set(CMAKE_HIP_FLAGS_DEBUG ${USER_HIP_FLAGS_DEBUG} CACHE STRING
+      "Flags used by the CXX-compiler during debug builds." FORCE)
+    set(CMAKE_HIP_FLAGS_RELEASE ${USER_HIP_FLAGS_RELEASE} CACHE STRING
+      "Flags used by the CXX-compiler during release builds." FORCE)
+  endif()
+
   message(STATUS "Build Type: " ${CMAKE_BUILD_TYPE})
   set(HASCACHE TRUE CACHE BOOL "CMakeCache.txt created." FORCE)
 
@@ -173,6 +184,13 @@ if(RTE_USE_CUDA)
     message(STATUS "NVCC-compiler flags: " ${CMAKE_CUDA_FLAGS} " " ${CMAKE_CUDA_FLAGS_RELEASE})
   else()
     message(STATUS "NVCC-compiler flags: " ${CMAKE_CUDA_FLAGS} " " ${CMAKE_CUDA_FLAGS_DEBUG})
+  endif()
+endif()
+if(RTE_USE_HIP)
+  if(CMAKE_BUILD_TYPE STREQUAL "RELEASE")
+    message(STATUS "HIPCC-compiler flags: " ${CMAKE_HIP_FLAGS} " " ${CMAKE_HIP_FLAGS_RELEASE})
+  else()
+    message(STATUS "HIPCC-compiler flags: " ${CMAKE_HIP_FLAGS} " " ${CMAKE_HIP_FLAGS_DEBUG})
   endif()
 endif()
 
@@ -223,11 +241,14 @@ target_include_directories(rte_rrtmgp_headers INTERFACE "${CMAKE_CURRENT_SOURCE_
 if(RTE_USE_CUDA)
   target_compile_definitions(rte_rrtmgp_headers INTERFACE RTE_USE_CUDA)
 endif()
+if(RTE_USE_HIP)
+  target_compile_definitions(rte_rrtmgp_headers INTERFACE RTE_USE_HIP)
+endif()
 if(RTE_USE_SP)
   target_compile_definitions(rte_rrtmgp_headers INTERFACE RTE_USE_SP)
 endif()
 
-if(RTE_USE_CUDA)
+if(RTE_USE_CUDA OR RTE_USE_HIP)
   add_library(rte_rrtmgp_cuda_headers INTERFACE)
   target_include_directories(rte_rrtmgp_cuda_headers INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include/gpu")
 

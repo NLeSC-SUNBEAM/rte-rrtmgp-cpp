@@ -12,6 +12,11 @@
 
 #if defined(__CUDACC__) || defined(__HIPCC__)
 
+#ifdef RTE_USE_KMM
+#include "kmm/core/backends.hpp"
+using kmm::gpu_event_t;
+#endif
+
 using Tuner_map = std::map<std::string, std::pair<dim3, dim3>>;
 
 

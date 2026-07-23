@@ -1,5 +1,9 @@
 #include "mem_pool_gpu.h"
 
+#if defined(RTE_USE_KMM)
+#include "kmm/core/backends.hpp"
+#endif
+
 
 Memory_pool_gpu::Memory_pool_gpu(const std::map<std::size_t, std::size_t>& block_sizes_) : alloc_counter(0), alloc_bytes(0)
 {
@@ -59,7 +63,11 @@ Memory_pool_gpu::~Memory_pool_gpu()
     // Free raw pointers
     for (auto it = raw_pointers.begin(); it != raw_pointers.end(); ++it)
     {
+        #if !defined(RTE_USE_KMM)
         cudaFree(*it);
+        #else
+        gpu_free(*it);
+        #endif
     }
     raw_pointers.clear();
     blocks.clear();
@@ -70,8 +78,13 @@ Memory_pool_gpu::~Memory_pool_gpu()
 void* Memory_pool_gpu::allocate(std::size_t nbytes_)
 {
     void* data_ptr = nullptr;
+    #if !defined(RTE_USE_KMM)
     int err = cudaMalloc((void **) &data_ptr, nbytes_);
     if (cudaSuccess != err)
+    #else
+    int err = gpu_malloc((void **) &data_ptr, nbytes_);
+    if (GPU_SUCCESS != err)
+    #endif
     {
         printf("cudaMalloc failed attempting to allocate %lu bytes\n", nbytes_);
         throw 1;

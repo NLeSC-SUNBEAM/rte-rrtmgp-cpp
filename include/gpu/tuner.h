@@ -10,7 +10,7 @@
 #include <map>
 
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) || defined(__HIPCC__)
 
 using Tuner_map = std::map<std::string, std::pair<dim3, dim3>>;
 
@@ -131,6 +131,7 @@ std::tuple<dim3, dim3> tune_kernel(
                 for (int n=0; n<n_samples; ++n)
                     f<<<grid, block>>>(args...);
 
+#if !defined(RTE_USE_KMM)
                 cudaDeviceSynchronize();
                 cudaEvent_t start;
                 cudaEvent_t stop;
@@ -151,7 +152,31 @@ std::tuple<dim3, dim3> tune_kernel(
 
                 // Check whether kernel has succeeded.
                 cudaError err = cudaGetLastError();
-                if (err != cudaSuccess)
+                bool kernel_failed = (err != cudaSuccess);
+#else
+                gpu_device_synchronize();
+                gpu_event_t start;
+                gpu_event_t stop;
+                gpu_event_create(&start);
+                gpu_event_create(&stop);
+
+                gpu_event_record(start, 0);
+                for (int n=0; n<n_samples; ++n)
+                    f<<<grid, block>>>(args...);
+                gpu_event_record(stop, 0);
+
+                gpu_event_synchronize(stop);
+                float duration = 0.f;
+                gpu_event_elapsed_time(&duration, start, stop);
+
+                gpu_event_destroy(start);
+                gpu_event_destroy(stop);
+
+                // Check whether kernel has succeeded.
+                gpu_error_t err = gpu_get_last_error();
+                bool kernel_failed = (err != GPU_SUCCESS);
+#endif
+                if (kernel_failed)
                 {
                     tuner_output
                         << std::setw(10) << i
@@ -207,6 +232,7 @@ void tune_ijk(
     for (int i=0; i<n_samples; ++i)
         Func::template launch<I, J, K>(grid, block, args...);
 
+#if !defined(RTE_USE_KMM)
     cudaDeviceSynchronize();
     cudaEvent_t start;
     cudaEvent_t stop;
@@ -227,7 +253,31 @@ void tune_ijk(
 
     // Check whether kernel has succeeded.
     cudaError err = cudaGetLastError();
-    if (err != cudaSuccess)
+    bool kernel_failed = (err != cudaSuccess);
+#else
+    gpu_device_synchronize();
+    gpu_event_t start;
+    gpu_event_t stop;
+    gpu_event_create(&start);
+    gpu_event_create(&stop);
+
+    gpu_event_record(start, 0);
+    for (int i=0; i<n_samples; ++i)
+        Func::template launch<I, J, K>(grid, block, args...);
+    gpu_event_record(stop, 0);
+
+    gpu_event_synchronize(stop);
+    float duration = 0.f;
+    gpu_event_elapsed_time(&duration, start, stop);
+
+    gpu_event_destroy(start);
+    gpu_event_destroy(stop);
+
+    // Check whether kernel has succeeded.
+    gpu_error_t err = gpu_get_last_error();
+    bool kernel_failed = (err != GPU_SUCCESS);
+#endif
+    if (kernel_failed)
     {
         tuner_output
             << std::setw(10) << I
@@ -367,6 +417,6 @@ void run_kernel_compile_time(
     (run_i<Func, Is>(js, ks, grid, block, args...), ...);
 }
 
-#endif // __CUDACC__
+#endif // __CUDACC__ || __HIPCC__
 
 #endif // TUNER_H

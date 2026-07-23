@@ -3,7 +3,7 @@
 
 #include "types.h"
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) || defined(__HIPCC__)
 __device__ inline int sample_alias_table(
         const double* __restrict__ prob,
         const int* __restrict__ alias,

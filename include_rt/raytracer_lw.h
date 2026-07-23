@@ -2,7 +2,7 @@
 #define RAYTRACER_LW_RT_H
 
 #include <memory>
-#ifdef RTE_USE_CUDA
+#if defined(RTE_USE_CUDA) || defined(RTE_USE_HIP)
 #include <curand_kernel.h>
 #endif
 
@@ -15,7 +15,7 @@ template<typename, int> class Array_gpu;
 class Optical_props_rt;
 class Optical_props_arry_rt;
 
-#ifdef RTE_USE_CUDA
+#if defined(RTE_USE_CUDA) || defined(RTE_USE_HIP)
 class Raytracer_lw
 {
     public:

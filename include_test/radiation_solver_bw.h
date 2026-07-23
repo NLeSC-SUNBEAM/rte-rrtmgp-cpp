@@ -43,7 +43,7 @@ class Radiation_solver_bw_longwave
                 const std::string& file_name_cloud);
 
 
-        #ifdef RTE_USE_CUDA
+        #if defined(RTE_USE_CUDA) || defined(RTE_USE_HIP)
         void solve_gpu(
                 const bool switch_fluxes,
                 const bool switch_cloud_optics,
@@ -73,7 +73,7 @@ class Radiation_solver_bw_longwave
 
     private:
 
-        #ifdef RTE_USE_CUDA
+        #if defined(RTE_USE_CUDA) || defined(RTE_USE_HIP)
         std::unique_ptr<Gas_optics_rrtmgp_rt> kdist_gpu;
         std::unique_ptr<Cloud_optics_rt> cloud_optics_gpu;
         Rte_lw_rt rte_lw;
@@ -102,7 +102,7 @@ class Radiation_solver_bw_shortwave
                 const bool switch_broadband,
                 const bool switch_image);
 
-        #ifdef RTE_USE_CUDA
+        #if defined(RTE_USE_CUDA) || defined(RTE_USE_HIP)
         void solve_gpu(
                 const bool switch_cloud_optics,
                 const bool switch_cloud_mie,
@@ -137,7 +137,7 @@ class Radiation_solver_bw_shortwave
                 Array_gpu<Float,2>& zen_cam);
         #endif
 
-        #ifdef RTE_USE_CUDA
+        #if defined(RTE_USE_CUDA) || defined(RTE_USE_HIP)
         void solve_gpu_bb(
                 const bool switch_cloud_optics,
                 const bool switch_cloud_mie,
@@ -185,7 +185,7 @@ class Radiation_solver_bw_shortwave
 
     private:
 
-        #ifdef RTE_USE_CUDA
+        #if defined(RTE_USE_CUDA) || defined(RTE_USE_HIP)
         std::unique_ptr<Gas_optics_rt> kdist_gpu;
         std::unique_ptr<Cloud_optics_rt> cloud_optics_gpu;
         std::unique_ptr<Aerosol_optics_rt> aerosol_optics_gpu;

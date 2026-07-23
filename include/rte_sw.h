@@ -57,7 +57,7 @@ class Rte_sw
 };
 
 
-#ifdef RTE_USE_CUDA
+#if defined(RTE_USE_CUDA) || defined(RTE_USE_HIP)
 template<typename, int> class Array_gpu;
 
 class Rte_sw_gpu

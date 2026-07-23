@@ -167,7 +167,7 @@ void add_to(Optical_props_2str& op_inout, const Optical_props_2str& op_in);
 
 
 // GPU version of optical props class
-#ifdef RTE_USE_CUDA
+#if defined(RTE_USE_CUDA) || defined(RTE_USE_HIP)
 
 // Forward declare the classes in order to define add_to before the classes to enable friend function.
 class Optical_props_1scl_gpu;
@@ -291,6 +291,6 @@ class Optical_props_2str_gpu : public Optical_props_arry_gpu
 
         friend void add_to(Optical_props_2str_gpu& op_inout, const Optical_props_2str_gpu& op_in);
 };
-#endif // RTE_USE_CUDA
+#endif // RTE_USE_CUDA || RTE_USE_HIP
 
 #endif // OPTICAL_PROPS_H

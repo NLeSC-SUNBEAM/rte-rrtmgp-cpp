@@ -32,7 +32,7 @@
 template<typename, int> class Array_gpu;
 class Optical_props_arry_rt;
 
-#ifdef RTE_USE_CUDA
+#if defined(RTE_USE_CUDA) || defined(RTE_USE_HIP)
 class Rte_sw_rt
 {
     public:

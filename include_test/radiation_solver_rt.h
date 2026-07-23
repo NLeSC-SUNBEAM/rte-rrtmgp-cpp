@@ -44,7 +44,7 @@ class Radiation_solver_longwave
                 const std::string& file_name_cloud,
                 const std::string& file_name_aerosol);
 
-        #ifdef RTE_USE_CUDA
+        #if defined(RTE_USE_CUDA) || defined(RTE_USE_HIP)
         void solve_gpu(
                 const bool switch_raytracing,
                 const bool switch_plane_parallel,
@@ -90,7 +90,7 @@ class Radiation_solver_longwave
     private:
         Raytracer_lw raytracer_lw;
 
-        #ifdef RTE_USE_CUDA
+        #if defined(RTE_USE_CUDA) || defined(RTE_USE_HIP)
         std::unique_ptr<Gas_optics_rrtmgp_rt> kdist_gpu;
         std::unique_ptr<Cloud_optics_rt> cloud_optics_gpu;
         std::unique_ptr<Aerosol_optics_rt> aerosol_optics_gpu;
@@ -118,7 +118,7 @@ class Radiation_solver_shortwave
         void load_mie_tables(
                 const std::string& file_name_mie);
 
-        #ifdef RTE_USE_CUDA
+        #if defined(RTE_USE_CUDA) || defined(RTE_USE_HIP)
         void solve_gpu(
                 const bool switch_raytracing,
                 const bool switch_plane_parallel,
@@ -170,7 +170,7 @@ class Radiation_solver_shortwave
         #endif
 
     private:
-        #ifdef RTE_USE_CUDA
+        #if defined(RTE_USE_CUDA) || defined(RTE_USE_HIP)
         std::unique_ptr<Gas_optics_rt> kdist_gpu;
         std::unique_ptr<Cloud_optics_rt> cloud_optics_gpu;
         std::unique_ptr<Aerosol_optics_rt> aerosol_optics_gpu;

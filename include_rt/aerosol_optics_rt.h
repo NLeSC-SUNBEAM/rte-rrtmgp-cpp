@@ -16,7 +16,7 @@ using Aerosol_concs = Gas_concs;
 // Forward declarations.
 class Optical_props_rt;
 
-#ifdef RTE_USE_CUDA
+#if defined(RTE_USE_CUDA) || defined(RTE_USE_HIP)
 class Aerosol_optics_rt : public Optical_props_rt
 {
     public:

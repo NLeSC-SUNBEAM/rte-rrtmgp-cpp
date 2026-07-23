@@ -33,7 +33,7 @@
 
 template<typename, int> class Array;
 
-#ifdef RTE_USE_CUDA
+#if defined(RTE_USE_CUDA) || defined(RTE_USE_HIP)
 class Gas_concs_rt;
 #endif
 
@@ -65,7 +65,7 @@ class Gas_concs_rt;
 //};
 
 
-#ifdef RTE_USE_CUDA
+#if defined(RTE_USE_CUDA) || defined(RTE_USE_HIP)
 template<typename, int> class Array_gpu;
 
 

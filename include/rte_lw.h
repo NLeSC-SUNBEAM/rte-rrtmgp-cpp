@@ -57,7 +57,7 @@ class Rte_lw
                 Array<Float,2>& arr_out);
 };
 
-#ifdef RTE_USE_CUDA
+#if defined(RTE_USE_CUDA) || defined(RTE_USE_HIP)
 template<typename, int> class Array_gpu;
 
 class Rte_lw_gpu

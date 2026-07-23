@@ -18,6 +18,7 @@ void prepare_gpu_mempool()
 }
 #elif defined(RTE_RRTMGP_GPU_MEMPOOL_NATIVE) && defined(RTE_USE_KMM)
 #include "kmm/core/backends.hpp"
+using kmm::gpu_mem_pool_t;
 
 static bool native_mempool_initialized = false;
 

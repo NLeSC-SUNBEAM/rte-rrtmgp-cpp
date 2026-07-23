@@ -111,6 +111,7 @@ namespace Tools_gpu
 }
 #elif (defined(__CUDACC__) || defined(__HIPCC__)) && defined(RTE_USE_KMM)
 #include "kmm/core/backends.hpp"
+using kmm::gpu_error_t;
 
 #define gpu_safe_call(err) Tools_gpu::__gpu_safe_call(err, __FILE__, __LINE__)
 #define gpu_check_error()  Tools_gpu::__gpu_check_error(__FILE__, __LINE__)

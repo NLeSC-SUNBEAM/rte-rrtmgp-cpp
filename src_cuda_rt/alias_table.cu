@@ -77,7 +77,11 @@ void build_alias_table(
     cub::DeviceReduce::Sum(d_reduce_temp, reduce_temp_bytes, weights_gpu, d_total, n);
     cudaFree(d_reduce_temp);
 
+    #if !defined(RTE_USE_KMM)
     cuda_safe_call(cudaMemcpy(&total_sum, d_total, sizeof(double), cudaMemcpyDeviceToHost));
+    #else
+    gpu_safe_call(gpu_memcpy(&total_sum, d_total, sizeof(double), gpu_memcpy_device_to_host));
+    #endif
     Tools_gpu::free_gpu(d_total);
 
     if (total_sum <= 0.) return;
@@ -115,7 +119,11 @@ void build_alias_table(
                 buf_a, buf_b, d_n_small, n_active, pred);
 
         int n_small;
+        #if !defined(RTE_USE_KMM)
         cuda_safe_call(cudaMemcpy(&n_small, d_n_small, sizeof(int), cudaMemcpyDeviceToHost));
+        #else
+        gpu_safe_call(gpu_memcpy(&n_small, d_n_small, sizeof(int), gpu_memcpy_device_to_host));
+        #endif
 
         const int n_large = n_active - n_small;
         if (n_small == 0 || n_large == 0) break;
@@ -129,10 +137,22 @@ void build_alias_table(
         // Carry forward unpaired small entries and all (adjusted) large entries.
         const int unpaired_small = n_small - k;
         if (unpaired_small > 0)
+        {
+            #if !defined(RTE_USE_KMM)
             cuda_safe_call(cudaMemcpy(
                     buf_a, buf_b + k, unpaired_small * sizeof(int), cudaMemcpyDeviceToDevice));
+            #else
+            gpu_safe_call(gpu_memcpy(
+                    buf_a, buf_b + k, unpaired_small * sizeof(int), gpu_memcpy_device_to_device));
+            #endif
+        }
+        #if !defined(RTE_USE_KMM)
         cuda_safe_call(cudaMemcpy(
                 buf_a + unpaired_small, buf_b + n_small, n_large * sizeof(int), cudaMemcpyDeviceToDevice));
+        #else
+        gpu_safe_call(gpu_memcpy(
+                buf_a + unpaired_small, buf_b + n_small, n_large * sizeof(int), gpu_memcpy_device_to_device));
+        #endif
         n_active = unpaired_small + n_large;
     }
 

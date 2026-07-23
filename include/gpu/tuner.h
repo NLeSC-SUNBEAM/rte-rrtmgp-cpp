@@ -14,6 +14,7 @@
 
 #ifdef RTE_USE_KMM
 #include "kmm/core/backends.hpp"
+using kmm::gpu_error_t;
 using kmm::gpu_event_t;
 #endif
 

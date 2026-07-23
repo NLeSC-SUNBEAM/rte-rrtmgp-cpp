@@ -26,14 +26,22 @@ namespace
     template<typename T>
     void copy_to_gpu(T* gpu_data, const T* cpu_data, const int length)
     {
+        #if !defined(RTE_USE_KMM)
         cuda_safe_call(cudaMemcpy(gpu_data, cpu_data, length*sizeof(T), cudaMemcpyHostToDevice));
+        #else
+        gpu_safe_call(gpu_memcpy(gpu_data, cpu_data, length*sizeof(T), gpu_memcpy_host_to_device));
+        #endif
     }
 
 
     template<typename T>
     void copy_from_gpu(T* cpu_data, const T* gpu_data, const int length)
     {
+        #if !defined(RTE_USE_KMM)
         cuda_safe_call(cudaMemcpy(cpu_data, gpu_data, length*sizeof(T), cudaMemcpyDeviceToHost));
+        #else
+        gpu_safe_call(gpu_memcpy(cpu_data, gpu_data, length*sizeof(T), gpu_memcpy_device_to_host));
+        #endif
     }
 
 

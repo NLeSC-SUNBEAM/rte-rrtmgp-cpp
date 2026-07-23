@@ -147,11 +147,15 @@ class Array
             strides(array_gpu.strides),
             offsets(array_gpu.offsets)
         {
-            #ifdef __CUDACC__
+            #if defined(__CUDACC__) || defined(__HIPCC__)
+            #if !defined(RTE_USE_KMM)
             cuda_safe_call(cudaMemcpy(data.data(), array_gpu.ptr(), ncells*sizeof(T), cudaMemcpyDeviceToHost));
             #else
-            throw std::runtime_error("Array(const Array_gpu&) can only be used in code compiled by nvcc");
-            #endif // __CUDACC__
+            gpu_safe_call(gpu_memcpy(data.data(), array_gpu.ptr(), ncells*sizeof(T), gpu_memcpy_device_to_host));
+            #endif
+            #else
+            throw std::runtime_error("Array(const Array_gpu&) can only be used in code compiled by nvcc or hipcc");
+            #endif // __CUDACC__ || __HIPCC__
         }
         
 
@@ -307,9 +311,9 @@ struct Subset_data
     bool do_spread[N];
 };
 
-#ifdef RTE_USE_CUDA
+#if defined(RTE_USE_CUDA) || defined(RTE_USE_HIP)
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) || defined(__HIPCC__)
 template<typename T, int N> __global__
 void subset_kernel(
         T* __restrict__ a_sub,
@@ -351,7 +355,7 @@ void fill_kernel(
     }
 }
 
-#endif // __CUDACC__
+#endif // __CUDACC__ || __HIPCC__
 
 
 template<typename T, int N>
@@ -372,9 +376,9 @@ class Array_gpu
                 data_ptr = nullptr;
             else
             {
-                #ifdef __CUDACC__
+                #if defined(__CUDACC__) || defined(__HIPCC__)
                 Tools_gpu::free_gpu(data_ptr);
-                #endif // __CUDACC__
+                #endif // __CUDACC__ || __HIPCC__
             }
         }
 
@@ -396,16 +400,24 @@ class Array_gpu
             else if (this->ncells == 0)
             {
                 is_view = false;
-                #ifdef __CUDACC__
+                #if defined(__CUDACC__) || defined(__HIPCC__)
                 data_ptr = Tools_gpu::allocate_gpu<T>(ncells);
+                #if !defined(RTE_USE_KMM)
                 cuda_safe_call(cudaMemcpy(data_ptr, array.ptr(), ncells*sizeof(T), cudaMemcpyDeviceToDevice));
-                #endif // __CUDACC__
+                #else
+                gpu_safe_call(gpu_memcpy(data_ptr, array.ptr(), ncells*sizeof(T), gpu_memcpy_device_to_device));
+                #endif
+                #endif // __CUDACC__ || __HIPCC__
             }
             else
             {
-                #ifdef __CUDACC__
+                #if defined(__CUDACC__) || defined(__HIPCC__)
+                #if !defined(RTE_USE_KMM)
                 cuda_safe_call(cudaMemcpy(data_ptr, array.ptr(), ncells*sizeof(T), cudaMemcpyDeviceToDevice));
-                #endif // __CUDACC__
+                #else
+                gpu_safe_call(gpu_memcpy(data_ptr, array.ptr(), ncells*sizeof(T), gpu_memcpy_device_to_device));
+                #endif
+                #endif // __CUDACC__ || __HIPCC__
             }
             return (*this);
         }
@@ -415,10 +427,10 @@ class Array_gpu
             if ( !(this->ncells == array.size() || (this->ncells == 0 && data_ptr == nullptr)) )
                 throw std::runtime_error("initialised arrays can not be resized");
 
-            #ifdef __CUDACC__
+            #if defined(__CUDACC__) || defined(__HIPCC__)
             if (this->ncells > 0)
                 Tools_gpu::free_gpu(data_ptr);
-            #endif // __CUDACC__
+            #endif // __CUDACC__ || __HIPCC__
 
             dims = std::exchange(array.dims, {});
             ncells = std::exchange(array.ncells, 0);
@@ -445,10 +457,14 @@ class Array_gpu
             }
             else
             {
-                #ifdef __CUDACC__
+                #if defined(__CUDACC__) || defined(__HIPCC__)
                 data_ptr = Tools_gpu::allocate_gpu<T>(ncells);
+                #if !defined(RTE_USE_KMM)
                 cuda_safe_call(cudaMemcpy(data_ptr, array.ptr(), ncells*sizeof(T), cudaMemcpyDeviceToDevice));
-                #endif // __CUDACC__
+                #else
+                gpu_safe_call(gpu_memcpy(data_ptr, array.ptr(), ncells*sizeof(T), gpu_memcpy_device_to_device));
+                #endif
+                #endif // __CUDACC__ || __HIPCC__
             }
         }
 
@@ -471,9 +487,9 @@ class Array_gpu
             offsets({}),
             is_view(false)
         {
-            #ifdef __CUDACC__
+            #if defined(__CUDACC__) || defined(__HIPCC__)
             data_ptr = Tools_gpu::allocate_gpu<T>(ncells);
-            #endif // __CUDACC__
+            #endif // __CUDACC__ || __HIPCC__
         }
 
         // Create an array that is a view.
@@ -496,10 +512,14 @@ class Array_gpu
             offsets(array.offsets),
             is_view(false)
         {
-            #ifdef __CUDACC__
+            #if defined(__CUDACC__) || defined(__HIPCC__)
             data_ptr = Tools_gpu::allocate_gpu<T>(ncells);
+            #if !defined(RTE_USE_KMM)
             cuda_safe_call(cudaMemcpy(data_ptr, array.ptr(), ncells*sizeof(T), cudaMemcpyHostToDevice));
-            #endif // __CUDACC__
+            #else
+            gpu_safe_call(gpu_memcpy(data_ptr, array.ptr(), ncells*sizeof(T), gpu_memcpy_host_to_device));
+            #endif
+            #endif // __CUDACC__ || __HIPCC__
         }
 
         inline void set_offsets(const std::array<int, N>& offsets)
@@ -515,21 +535,25 @@ class Array_gpu
             constexpr int block_ncells = 64;
             const int grid_ncells = this->ncells/block_ncells + (this->ncells%block_ncells > 0);
 
-            #ifdef __CUDACC__
+            #if defined(__CUDACC__) || defined(__HIPCC__)
             dim3 block_gpu(block_ncells);
             dim3 grid_gpu(grid_ncells);
 
             fill_kernel<<<grid_gpu, block_gpu>>>(data_ptr, value, ncells);
-            #endif // __CUDACC__
+            #endif // __CUDACC__ || __HIPCC__
         }
 
 
         inline void set_data(const Array<T, N>& array)
         {
-            #ifdef __CUDACC__
+            #if defined(__CUDACC__) || defined(__HIPCC__)
             data_ptr = Tools_gpu::allocate_gpu<T>(ncells);
+            #if !defined(RTE_USE_KMM)
             cuda_safe_call(cudaMemcpy(data_ptr, array.ptr(), ncells*sizeof(T), cudaMemcpyHostToDevice));
-            #endif // __CUDACC__
+            #else
+            gpu_safe_call(gpu_memcpy(data_ptr, array.ptr(), ncells*sizeof(T), gpu_memcpy_host_to_device));
+            #endif
+            #endif // __CUDACC__ || __HIPCC__
         }
 
 
@@ -540,9 +564,9 @@ class Array_gpu
 
             this->dims = dims;
             ncells = product<N>(dims);
-            #ifdef __CUDACC__
+            #if defined(__CUDACC__) || defined(__HIPCC__)
             data_ptr = Tools_gpu::allocate_gpu<T>(ncells);
-            #endif // __CUDACC__
+            #endif // __CUDACC__ || __HIPCC__
             strides = calc_strides<N>(dims);
             offsets = {};
         }
@@ -553,16 +577,24 @@ class Array_gpu
             
             const int index = calc_index<N>(indices, strides, offsets);
             const int index_in =  calc_index<N>(indices_input, input.strides, input.offsets);
-            #ifdef __CUDACC__
+            #if defined(__CUDACC__) || defined(__HIPCC__)
+            #if !defined(RTE_USE_KMM)
             cuda_safe_call(cudaMemcpy(data_ptr + index, input.ptr() + index_in, sizeof(T), cudaMemcpyDeviceToDevice));
-            #endif // __CUDACC__
+            #else
+            gpu_safe_call(gpu_memcpy(data_ptr + index, input.ptr() + index_in, sizeof(T), gpu_memcpy_device_to_device));
+            #endif
+            #endif // __CUDACC__ || __HIPCC__
         }
 
         inline void insert(const std::array<int, N>& indices, const T value) const
         {
             const int index = calc_index<N>(indices, strides, offsets);
-            #ifdef __CUDACC__
+            #if defined(__CUDACC__) || defined(__HIPCC__)
+            #if !defined(RTE_USE_KMM)
             cuda_safe_call(cudaMemcpy(data_ptr + index, &value, sizeof(T), cudaMemcpyHostToDevice));
+            #else
+            gpu_safe_call(gpu_memcpy(data_ptr + index, &value, sizeof(T), gpu_memcpy_host_to_device));
+            #endif
             #endif
         }
 
@@ -574,14 +606,18 @@ class Array_gpu
         
         inline T operator()(const std::array<int, N>& indices) const
         {
-            #ifdef __CUDACC__
+            #if defined(__CUDACC__) || defined(__HIPCC__)
             const int index = calc_index<N>(indices, strides, offsets);
             T value;
+            #if !defined(RTE_USE_KMM)
             cuda_safe_call(cudaMemcpy(&value, data_ptr + index, sizeof(T), cudaMemcpyDeviceToHost));
+            #else
+            gpu_safe_call(gpu_memcpy(&value, data_ptr + index, sizeof(T), gpu_memcpy_device_to_host));
+            #endif
             return value;
             #else
-            throw std::runtime_error("Array_gpu::operator() can only be used in code compiled by nvcc");
-            #endif // __CUDACC__
+            throw std::runtime_error("Array_gpu::operator() can only be used in code compiled by nvcc or hipcc");
+            #endif // __CUDACC__ || __HIPCC__
         }
 
         inline int dim(const int i) const { return dims[i-1]; }
@@ -624,12 +660,12 @@ class Array_gpu
             constexpr int block_ncells = 64;
             const int grid_ncells = a_sub.ncells/block_ncells + (a_sub.ncells%block_ncells > 0);
 
-            #ifdef __CUDACC__
+            #if defined(__CUDACC__) || defined(__HIPCC__)
             dim3 block_gpu(block_ncells);
             dim3 grid_gpu(grid_ncells);
 
             subset_kernel<<<grid_gpu, block_gpu>>>(a_sub.data_ptr, data_ptr, subset_data, a_sub.ncells);
-            #endif // __CUDACC__
+            #endif // __CUDACC__ || __HIPCC__
 
             return a_sub;
         }
@@ -661,7 +697,7 @@ class Array_gpu
         friend class Array<T, N>;
 };
 
-#endif // RTE_USE_CUDA
+#endif // RTE_USE_CUDA || RTE_USE_HIP
 
 template<typename T, int N>
 bool any_vals_outside(const Array<T, N>& array, const T lower_limit, const T upper_limit)

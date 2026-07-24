@@ -10,9 +10,16 @@ FILE(GLOB sourcefiles_rt CONFIGURE_DEPENDS
 
 
 if(CMAKE_BUILD_TYPE STREQUAL "RELEASE")
-    set_source_files_properties("../src_kernels_cuda_rt/raytracer_kernels_sw.cu" PROPERTIES COMPILE_FLAGS --use_fast_math)
-    set_source_files_properties("../src_kernels_cuda_rt/raytracer_kernels_lw.cu" PROPERTIES COMPILE_FLAGS --use_fast_math)
-    set_source_files_properties("../src_kernels_cuda_rt/raytracer_kernels_bw.cu" PROPERTIES COMPILE_FLAGS --use_fast_math)
+    # nvcc spells its fast-math flag --use_fast_math; hipcc invokes clang
+    # directly, which (like gcc) spells the same thing -ffast-math.
+    if(RTE_USE_HIP)
+      set(fast_math_flag -ffast-math)
+    else()
+      set(fast_math_flag --use_fast_math)
+    endif()
+    set_source_files_properties("../src_kernels_cuda_rt/raytracer_kernels_sw.cu" PROPERTIES COMPILE_FLAGS ${fast_math_flag})
+    set_source_files_properties("../src_kernels_cuda_rt/raytracer_kernels_lw.cu" PROPERTIES COMPILE_FLAGS ${fast_math_flag})
+    set_source_files_properties("../src_kernels_cuda_rt/raytracer_kernels_bw.cu" PROPERTIES COMPILE_FLAGS ${fast_math_flag})
 endif()
 
 # See src_cuda/CMakeLists.txt for why this is needed under RTE_USE_HIP.

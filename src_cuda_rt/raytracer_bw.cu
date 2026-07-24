@@ -1,4 +1,8 @@
+#if defined(RTE_USE_CUDA)
 #include <curand_kernel.h>
+#elif defined(RTE_USE_HIP)
+#include <hiprand/hiprand_kernel.h>
+#endif
 
 #include "optical_props_rt.h"
 #include "array.h"

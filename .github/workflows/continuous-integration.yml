@@ -177,7 +177,7 @@ jobs:
     - name: Install dependencies
       run: |
         apt-get update -qq
-        apt-get install -y --no-install-recommends gcc g++ gfortran libnetcdf-dev cmake libboost-dev python3 rocblas-dev
+        apt-get install -y --no-install-recommends gcc g++ gfortran libnetcdf-dev cmake libboost-dev python3 rocblas-dev hiprand-dev rocrand-dev
 
     - name: Configure
       run: |

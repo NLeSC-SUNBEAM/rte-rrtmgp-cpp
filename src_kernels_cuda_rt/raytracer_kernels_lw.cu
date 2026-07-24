@@ -119,7 +119,9 @@ namespace
             Float& total_absorbed_weight,
             int& src_type)
     {
+        #ifdef __CUDACC__
         __syncwarp();
+        #endif
 
         ++photons_shot;
 

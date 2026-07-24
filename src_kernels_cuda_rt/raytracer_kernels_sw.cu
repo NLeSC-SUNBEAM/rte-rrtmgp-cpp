@@ -112,7 +112,9 @@ namespace
             const Vector<Float> sun_direction,
             Float& weight)
     {
+        #ifdef __CUDACC__
         __syncwarp();
+        #endif
         unsigned int random_number_x;
         unsigned int random_number_y;
         qrng.xy(&random_number_x, &random_number_y, grid_cells, qrng_grid_x, qrng_grid_y, photons_shot);

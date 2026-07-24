@@ -1,4 +1,3 @@
-#include <curand_kernel.h>
 #include <iomanip>
 #include <iostream>
 

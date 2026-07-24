@@ -2,7 +2,12 @@
 #define RAYTRACER_FUNCTIONS_H
 
 #include <iostream>
+
+#if defined(RTE_USE_CUDA)
 #include <curand_kernel.h>
+#elif defined(RTE_USE_HIP)
+#include <hiprand/hiprand_kernel.h>
+#endif
 
 #include "types.h"
 #include "raytracer_definitions.h"
@@ -163,12 +168,13 @@ namespace Raytracer_functions
     __device__
     inline void write_photon_out(Float* field_out, const Float w)
     {
-        #ifdef __CUDACC__
+        #if defined(__CUDACC__) || defined(__HIPCC__)
         atomicAdd(field_out, w);
         #endif
     }
 
 
+    #if defined(RTE_USE_CUDA)
     template<typename T>
     struct Random_number_generator
     {
@@ -199,5 +205,37 @@ namespace Raytracer_functions
     {
         return 1.f - curand_uniform(&state);
     }
+    #elif defined(RTE_USE_HIP)
+    template<typename T>
+    struct Random_number_generator
+    {
+        __device__ Random_number_generator(Int tid)
+        {
+            #ifdef RTE_SAFE_RNG
+            hiprand_init(0ULL, tid, Int(0), &state);
+            #else
+            hiprand_init(tid, 0ULL, Int(0), &state);
+            #endif
+        }
+
+        __device__ T operator()();
+
+        hiprandState state;
+    };
+
+
+    template<>
+    __device__ inline double Random_number_generator<double>::operator()()
+    {
+        return 1. - hiprand_uniform_double(&state);
+    }
+
+
+    template<>
+    __device__ inline float Random_number_generator<float>::operator()()
+    {
+        return 1.f - hiprand_uniform(&state);
+    }
+    #endif
 }
 #endif

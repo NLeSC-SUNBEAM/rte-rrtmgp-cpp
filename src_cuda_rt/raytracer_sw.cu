@@ -1,5 +1,3 @@
-#include <curand_kernel.h>
-
 #include "raytracer_sw.h"
 #include "array.h"
 #include "optical_props_rt.h"

@@ -2,8 +2,10 @@
 #define RAYTRACER_RT_H
 
 #include <memory>
-#if defined(RTE_USE_CUDA) || defined(RTE_USE_HIP)
+#if defined(RTE_USE_CUDA)
 #include <curand_kernel.h>
+#elif defined(RTE_USE_HIP)
+#include <hiprand/hiprand_kernel.h>
 #endif
 
 #include "types.h"

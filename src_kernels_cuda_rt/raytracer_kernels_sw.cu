@@ -1,4 +1,12 @@
+#if defined(RTE_USE_CUDA)
+#include <curand.h>
 #include <curand_kernel.h>
+using DirectionVectors32_t = curandDirectionVectors32_t;
+#elif defined(RTE_USE_HIP)
+#include <hiprand/hiprand.h>
+#include <hiprand/hiprand_kernel.h>
+using DirectionVectors32_t = hiprandDirectionVectors32_t;
+#endif
 #include <iostream>
 
 #include "raytracer_kernels_sw.h"
@@ -10,6 +18,7 @@ namespace
 
     constexpr Float w_thres = 0.5;
 
+    #if defined(RTE_USE_CUDA)
     struct Quasi_random_number_generator_2d
     {
         __device__ Quasi_random_number_generator_2d(
@@ -48,6 +57,46 @@ namespace
         curandStateScrambledSobol32_t state_x;
         curandStateScrambledSobol32_t state_y;
     };
+    #elif defined(RTE_USE_HIP)
+    struct Quasi_random_number_generator_2d
+    {
+        __device__ Quasi_random_number_generator_2d(
+                hiprandDirectionVectors32_t* vectors, unsigned int* constants, unsigned int offset)
+        {
+            hiprand_init(vectors[0], constants[0], offset, &state_x);
+            hiprand_init(vectors[1], constants[1], offset, &state_y);
+        }
+
+        __device__ void xy(unsigned int* x, unsigned int* y,
+                           const Vector<int>& grid_cells,
+                           const Int qrng_grid_x, const Int qrng_grid_y,
+                           Int& photons_shot)
+        {
+            *x = hiprand(&state_x);
+            *y = hiprand(&state_y);
+
+            while (true)
+            {
+                const int i = *x / static_cast<unsigned int>((1ULL << 32) / qrng_grid_x);
+                const int j = *y / static_cast<unsigned int>((1ULL << 32) / qrng_grid_y);
+
+                ++photons_shot;
+                if (i < grid_cells.x && j < grid_cells.y)
+                {
+                    return;
+                }
+                else
+                {
+                    *x = hiprand(&state_x);
+                    *y = hiprand(&state_y);
+                }
+            }
+        }
+
+        hiprandStateScrambledSobol32_t state_x;
+        hiprandStateScrambledSobol32_t state_y;
+    };
+    #endif
 
     __device__
     inline void reset_photon(
@@ -144,7 +193,7 @@ void ray_tracer_kernel(
         const Vector<int> grid_cells,
         const Vector<int> kn_grid,
         const Vector<Float> sun_direction,
-        curandDirectionVectors32_t* qrng_vectors, unsigned int* qrng_constants,
+        DirectionVectors32_t* qrng_vectors, unsigned int* qrng_constants,
         const Float* __restrict__ mie_cdf,
         const Float* __restrict__ mie_ang,
         const int mie_table_size)
@@ -462,10 +511,10 @@ template __global__ void ray_tracer_kernel<true>(
         const Int, const Int, const Int, const Int,const Float*, Float*, Float*, Float*, Float*,
         Float*, Float*, Float*, const Float*, const Optics_scat*, const Float*, const Float, const Float,
         const Float*, const Vector<Float>, const Vector<Float>, const Vector<int>, const Vector<int>,
-        const Vector<Float>, curandDirectionVectors32_t*, unsigned int*, const Float*, const Float*, const int);
+        const Vector<Float>, DirectionVectors32_t*, unsigned int*, const Float*, const Float*, const int);
 
 template __global__ void ray_tracer_kernel<false>(
         const Int, const Int, const Int, const Int,const Float*, Float*, Float*, Float*, Float*,
         Float*, Float*, Float*, const Float*, const Optics_scat*, const Float*, const Float, const Float,
         const Float*, const Vector<Float>, const Vector<Float>, const Vector<int>, const Vector<int>,
-        const Vector<Float>, curandDirectionVectors32_t*, unsigned int*, const Float*, const Float*, const int);
+        const Vector<Float>, DirectionVectors32_t*, unsigned int*, const Float*, const Float*, const int);

@@ -3,7 +3,11 @@
 
 #include <memory>
 #include "types.h"
+#if defined(RTE_USE_CUDA)
 #include <curand_kernel.h>
+#elif defined(RTE_USE_HIP)
+#include <hiprand/hiprand_kernel.h>
+#endif
 #include "raytracer_kernels_bw.h"
 #include "optical_props_rt.h"
 
@@ -12,7 +16,7 @@ template<typename, int> class Array_gpu;
 class Optical_props_rt;
 class Optical_props_arry_rt;
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) || defined(__HIPCC__)
 class Raytracer_bw
 {
     public:
@@ -113,6 +117,6 @@ class Raytracer_bw
     private:
 
 };
-#endif
+#endif // __CUDACC__ || __HIPCC__
 
 #endif

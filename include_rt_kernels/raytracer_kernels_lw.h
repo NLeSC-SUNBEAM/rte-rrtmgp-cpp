@@ -1,6 +1,14 @@
 #ifndef RAYTRACER_KERNELS_LW_H
 #define RAYTRACER_KERNELS_LW_H
 
+#if defined(RTE_USE_CUDA)
+#include <curand_kernel.h>
+using DirectionVectors32_t = curandDirectionVectors32_t;
+#elif defined(RTE_USE_HIP)
+#include <hiprand/hiprand_kernel.h>
+using DirectionVectors32_t = hiprandDirectionVectors32_t;
+#endif
+
 #include "raytracer_functions.h"
 #include "raytracer_definitions.h"
 
@@ -40,6 +48,6 @@ void ray_tracer_lw_kernel(
         const Vector<Float> grid_d,
         const Vector<int> grid_cells,
         const Vector<int> kn_grid,
-        curandDirectionVectors32_t* qrng_vectors,
+        DirectionVectors32_t* qrng_vectors,
         unsigned int* qrng_constants);
 #endif

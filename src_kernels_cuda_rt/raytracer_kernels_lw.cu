@@ -1,4 +1,12 @@
+#if defined(RTE_USE_CUDA)
+#include <curand.h>
 #include <curand_kernel.h>
+using DirectionVectors32_t = curandDirectionVectors32_t;
+#elif defined(RTE_USE_HIP)
+#include <hiprand/hiprand.h>
+#include <hiprand/hiprand_kernel.h>
+using DirectionVectors32_t = hiprandDirectionVectors32_t;
+#endif
 #include <iostream>
 
 #include "raytracer_kernels_lw.h"
@@ -11,6 +19,7 @@ namespace
 
     constexpr Float w_thres = 0.5;
 
+    #if defined(RTE_USE_CUDA)
     struct Quasi_random_number_generator_2d
     {
         __device__ Quasi_random_number_generator_2d(
@@ -38,6 +47,35 @@ namespace
         curandStateScrambledSobol32_t state_0;
         curandStateScrambledSobol32_t state_1;
     };
+    #elif defined(RTE_USE_HIP)
+    struct Quasi_random_number_generator_2d
+    {
+        __device__ Quasi_random_number_generator_2d(
+                hiprandDirectionVectors32_t* vectors, unsigned int* constants, unsigned int offset)
+        {
+            hiprand_init(vectors[0], constants[0], offset, &state_0);
+            hiprand_init(vectors[1], constants[1], offset, &state_1);
+        }
+
+        __device__ double operator()()
+        {
+            if (use_first)
+            {
+                use_first = false;
+                return hiprand_uniform_double(&state_0);
+            }
+            else
+            {
+                use_first = true;
+                return hiprand_uniform_double(&state_1);
+            }
+        }
+
+        bool use_first = true;
+        hiprandStateScrambledSobol32_t state_0;
+        hiprandStateScrambledSobol32_t state_1;
+    };
+    #endif
 
     __device__
     inline void write_emission(
@@ -173,7 +211,7 @@ __global__ void ray_tracer_lw_kernel(
         const Vector<Float> grid_d,
         const Vector<int> grid_cells,
         const Vector<int> kn_grid,
-        curandDirectionVectors32_t* qrng_vectors,
+        DirectionVectors32_t* qrng_vectors,
         unsigned int* qrng_constants)
 {
     const Vector<Float> kn_grid_d = grid_size / kn_grid;
@@ -486,7 +524,7 @@ template __global__ void ray_tracer_lw_kernel<true>(
     const Vector<Float>,
     const Vector<int>,
     const Vector<int>,
-    curandDirectionVectors32_t*,
+    DirectionVectors32_t*,
     unsigned int*);
 
 template __global__ void ray_tracer_lw_kernel<false>(
@@ -502,5 +540,5 @@ template __global__ void ray_tracer_lw_kernel<false>(
     const Vector<Float>,
     const Vector<int>,
     const Vector<int>,
-    curandDirectionVectors32_t*,
+    DirectionVectors32_t*,
     unsigned int*);

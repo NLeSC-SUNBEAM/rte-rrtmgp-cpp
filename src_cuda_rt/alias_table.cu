@@ -1,4 +1,8 @@
+#if defined(RTE_USE_CUDA)
 #include <cub/cub.cuh>
+#elif defined(RTE_USE_HIP)
+#include <hipcub/hipcub.hpp>
+#endif
 
 #include "alias_table.h"
 #include "tools_gpu.h"
@@ -72,10 +76,24 @@ void build_alias_table(
 
     void* d_reduce_temp = nullptr;
     size_t reduce_temp_bytes = 0;
+    #if defined(RTE_USE_CUDA)
     cub::DeviceReduce::Sum(d_reduce_temp, reduce_temp_bytes, weights_gpu, d_total, n);
+    #if !defined(RTE_USE_KMM)
     cudaMalloc(&d_reduce_temp, reduce_temp_bytes);
+    #else
+    gpu_malloc(&d_reduce_temp, reduce_temp_bytes);
+    #endif
     cub::DeviceReduce::Sum(d_reduce_temp, reduce_temp_bytes, weights_gpu, d_total, n);
+    #elif defined(RTE_USE_HIP)
+    hipcub::DeviceReduce::Sum(d_reduce_temp, reduce_temp_bytes, weights_gpu, d_total, n);
+    gpu_malloc(&d_reduce_temp, reduce_temp_bytes);
+    hipcub::DeviceReduce::Sum(d_reduce_temp, reduce_temp_bytes, weights_gpu, d_total, n);
+    #endif
+    #if !defined(RTE_USE_KMM)
     cudaFree(d_reduce_temp);
+    #else
+    gpu_free(d_reduce_temp);
+    #endif
 
     #if !defined(RTE_USE_KMM)
     cuda_safe_call(cudaMemcpy(&total_sum, d_total, sizeof(double), cudaMemcpyDeviceToHost));
@@ -104,19 +122,35 @@ void build_alias_table(
 
     void* d_part_temp = nullptr;
     size_t part_temp_bytes = 0;
+    #if defined(RTE_USE_CUDA)
     cub::DevicePartition::If(
             d_part_temp, part_temp_bytes,
             buf_a, buf_b, d_n_small, n, pred);
+    #elif defined(RTE_USE_HIP)
+    hipcub::DevicePartition::If(
+            d_part_temp, part_temp_bytes,
+            buf_a, buf_b, d_n_small, n, pred);
+    #endif
+    #if !defined(RTE_USE_KMM) 
     cudaMalloc(&d_part_temp, part_temp_bytes);
+    #else
+    gpu_malloc(&d_part_temp, part_temp_bytes);
+    #endif
 
     int n_active = n;
 
     while (n_active > 0)
     {
         size_t temp_bytes = part_temp_bytes;
+        #if defined(RTE_USE_CUDA)
         cub::DevicePartition::If(
                 d_part_temp, temp_bytes,
                 buf_a, buf_b, d_n_small, n_active, pred);
+        #elif defined(RTE_USE_HIP)
+        hipcub::DevicePartition::If(
+                d_part_temp, temp_bytes,
+                buf_a, buf_b, d_n_small, n_active, pred);
+        #endif
 
         int n_small;
         #if !defined(RTE_USE_KMM)
@@ -156,7 +190,11 @@ void build_alias_table(
         n_active = unpaired_small + n_large;
     }
 
+    #if !defined(RTE_USE_KMM)
     cudaFree(d_part_temp);
+    #elif defined(RTE_USE_HIP)
+    gpu_free(d_part_temp);
+    #endif
     Tools_gpu::free_gpu(w);
     Tools_gpu::free_gpu(buf_a);
     Tools_gpu::free_gpu(buf_b);

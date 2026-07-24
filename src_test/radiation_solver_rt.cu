@@ -34,7 +34,11 @@
 #include "fluxes_rt.h"
 #include "rte_lw_rt.h"
 #include "rte_sw_rt.h"
+#if defined(RTE_USE_CUDA)
 #include "cub/cub.cuh"
+#elif defined(RTE_USE_HIP)
+#include <hipcub/hipcub.hpp>
+#endif
 #include "subset_kernels_cuda.h"
 #include "gas_optics_rrtmgp_kernels_cuda_rt.h"
 #include "gpt_combine_kernels_cuda_rt.h"
@@ -613,18 +617,41 @@ void Radiation_solver_longwave::solve_gpu(
         Float* max_tau_gas_g = Tools_gpu::allocate_gpu<Float>(1);
         Float max_tau_gas = 0;
 
+        #if defined(RTE_USE_CUDA)
         // Get required temp storage size
         cub::DeviceReduce::Max(d_temp_storage, temp_storage_bytes,
                                optical_props->get_tau().ptr(), max_tau_gas_g, max_size);
 
         // Allocate temp storage
+        #if !defined(RTE_USE_KMM)
         cudaMalloc(&d_temp_storage, temp_storage_bytes);
+        #else
+        gpu_malloc(&d_temp_storage, temp_storage_bytes);
+        #endif
 
         // Compute max
         cub::DeviceReduce::Max(d_temp_storage, temp_storage_bytes,
                                optical_props->get_tau().ptr(), max_tau_gas_g, max_size);
 
+        #if !defined(RTE_USE_KMM)
         cudaMemcpy(&max_tau_gas, max_tau_gas_g, sizeof(Float), cudaMemcpyDeviceToHost);
+        #else
+        gpu_memcpy(&max_tau_gas, max_tau_gas_g, sizeof(Float), gpu_memcpy_device_to_host);
+        #endif
+        #elif defined(RTE_USE_HIP)
+        // Get required temp storage size
+        hipcub::DeviceReduce::Max(d_temp_storage, temp_storage_bytes,
+                               optical_props->get_tau().ptr(), max_tau_gas_g, max_size);
+
+        // Allocate temp storage
+        gpu_malloc(&d_temp_storage, temp_storage_bytes);
+
+        // Compute max
+        hipcub::DeviceReduce::Max(d_temp_storage, temp_storage_bytes,
+                               optical_props->get_tau().ptr(), max_tau_gas_g, max_size);
+
+        gpu_memcpy(&max_tau_gas, max_tau_gas_g, sizeof(Float), gpu_memcpy_device_to_host);
+        #endif
 
         const Float lowest_gas_mean_free_path = grid_d.z / max_tau_gas;
 

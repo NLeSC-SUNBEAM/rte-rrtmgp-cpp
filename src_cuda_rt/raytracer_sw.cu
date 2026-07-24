@@ -1,7 +1,6 @@
 #include "raytracer_sw.h"
 #include "array.h"
 #include "optical_props_rt.h"
-#include <cub/cub.cuh>
 #include "raytracer_definitions.h"
 #include "raytracer_functions.h"
 #include "raytracer_kernels_sw.h"

@@ -37,6 +37,12 @@ if(RTE_USE_HIP)
   set(USER_HIP_FLAGS "-std=c++17")
   set(USER_HIP_FLAGS_RELEASE "-O3 -DNDEBUG")
   set(USER_HIP_FLAGS_DEBUG "-O0 -g")
+
+  # hipCUB/rocPRIM (the HIP/ROCm equivalent of CUB, see CUB_INCLUDE_DIR
+  # above) are header-only and installed under the ROCm prefix rather than
+  # a CUDA-toolkit-style location, so they need their own include path.
+  set(ROCM_INCLUDE_DIR "/opt/rocm/include")
+  list(APPEND INCLUDE_DIRS ${ROCM_INCLUDE_DIR})
 endif()
 
 add_definitions(-DRTE_USE_CBOOL)

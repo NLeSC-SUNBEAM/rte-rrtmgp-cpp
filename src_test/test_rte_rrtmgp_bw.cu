@@ -18,7 +18,11 @@
 
 #include <chrono>
 #include <iomanip>
+#if defined(RTE_USE_CUDA)
 #include <cuda_profiler_api.h>
+#elif defined(RTE_USE_HIP)
+#include <hip/hip_runtime.h>
+#endif
 
 #include "toml.hpp"
 
@@ -490,9 +494,17 @@ void solve_radiation(int argc, char** argv)
         run_solver();
 
         // Profiling step;
+        #if defined(RTE_USE_CUDA)
         cudaProfilerStart();
+        #elif defined(RTE_USE_HIP)
+        hipProfilerStart();
+        #endif
         run_solver();
+        #if defined(RTE_USE_CUDA)
         cudaProfilerStop();
+        #elif defined(RTE_USE_HIP)
+        hipProfilerStop();
+        #endif
 
         constexpr int n_measures=10;
         for (int n=0; n<n_measures; ++n)
@@ -797,9 +809,17 @@ void solve_radiation(int argc, char** argv)
 
            if (switch_profiling)
            {
+               #if defined(RTE_USE_CUDA)
                cudaProfilerStart();
+               #elif defined(RTE_USE_HIP)
+               hipProfilerStart();
+               #endif
                run_solver_bb(false);
+               #if defined(RTE_USE_CUDA)
                cudaProfilerStop();
+               #elif defined(RTE_USE_HIP)
+               hipProfilerStop();
+               #endif
             }
         }
         if (switch_image)
@@ -813,9 +833,17 @@ void solve_radiation(int argc, char** argv)
             // Profiling step;
             if (switch_profiling)
             {
+                #if defined(RTE_USE_CUDA)
                 cudaProfilerStart();
+                #elif defined(RTE_USE_HIP)
+                hipProfilerStart();
+                #endif
                 run_solver(false);
+                #if defined(RTE_USE_CUDA)
                 cudaProfilerStop();
+                #elif defined(RTE_USE_HIP)
+                hipProfilerStop();
+                #endif
             }
         }
 

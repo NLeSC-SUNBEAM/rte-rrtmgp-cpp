@@ -192,7 +192,7 @@ void build_alias_table(
 
     #if !defined(RTE_USE_KMM)
     cudaFree(d_part_temp);
-    #elif defined(RTE_USE_HIP)
+    #else
     gpu_free(d_part_temp);
     #endif
     Tools_gpu::free_gpu(w);

@@ -41,11 +41,6 @@ if(RTE_USE_CUDA OR RTE_USE_HIP)
       radiation_solver_rt.cu test_rte_rrtmgp_rt.cu radiation_solver_bw.cu
       test_rt_lite.cu
       PROPERTIES LANGUAGE HIP)
-    # Mixing HIP-language sources into test_rte_rrtmgp_rt alongside this
-    # plain C++ file makes CMake's HIP-language support misidentify its
-    # language too (LINKER_LANGUAGE resolves to HIP for the whole target,
-    # which drags this source along) -- pin it back to CXX explicitly.
-    set_source_files_properties(../src_tilt/tilt_utils.cpp PROPERTIES LANGUAGE CXX)
     set(rand_lib hiprand)
   else()
     set(rand_lib curand)

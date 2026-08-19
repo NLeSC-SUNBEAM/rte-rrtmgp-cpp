@@ -40,7 +40,7 @@ jobs:
         mkdir build
         cd build
         cmake -DSYST=ubuntu_22lts ..
-        cmake --build .
+        cmake --build . --verbose
 
     - name: Stage test data
       run: |
@@ -103,7 +103,7 @@ jobs:
     - name: Build
       run: |
         cd build
-        cmake --build .
+        cmake --build . --verbose
 
   build-kmm-cuda:
     name: Build (KMM + CUDA)
@@ -145,7 +145,7 @@ jobs:
     - name: Build
       run: |
         cd build
-        cmake --build .
+        cmake --build . --verbose
 
   build-kmm-hip:
     name: Build (KMM + HIP)

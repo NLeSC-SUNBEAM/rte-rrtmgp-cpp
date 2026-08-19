@@ -36,6 +36,11 @@
 #include "types.h"
 #include "mem_pool_gpu.h"
 
+#ifdef RTE_USE_KMM
+#include "kmm/core/backends.hpp"
+using kmm::gpu_event_t;
+#endif
+
 
 void read_and_set_vmr(
         const std::string& gas_name, const int n_col_x, const int n_col_y, const int n_lay,
@@ -455,6 +460,7 @@ void solve_radiation(int argc, char** argv)
             Array_gpu<Float,2> rel_gpu(rel);
             Array_gpu<Float,2> dei_gpu(dei);
 
+            #if !defined(RTE_USE_KMM)
             cudaDeviceSynchronize();
             cudaEvent_t start;
             cudaEvent_t stop;
@@ -462,6 +468,15 @@ void solve_radiation(int argc, char** argv)
             cudaEventCreate(&stop);
 
             cudaEventRecord(start, 0);
+            #else
+            gpu_device_synchronize();
+            gpu_event_t start;
+            gpu_event_t stop;
+            gpu_event_create(&start);
+            gpu_event_create(&stop);
+
+            gpu_event_record(start, 0);
+            #endif
 
             rad_lw.solve_gpu(
                     switch_fluxes,
@@ -479,6 +494,7 @@ void solve_radiation(int argc, char** argv)
                     lw_flux_up, lw_flux_dn, lw_flux_net,
                     lw_bnd_flux_up, lw_bnd_flux_dn, lw_bnd_flux_net);
 
+            #if !defined(RTE_USE_KMM)
             cudaEventRecord(stop, 0);
             cudaEventSynchronize(stop);
             float duration = 0.f;
@@ -486,6 +502,15 @@ void solve_radiation(int argc, char** argv)
 
             cudaEventDestroy(start);
             cudaEventDestroy(stop);
+            #else
+            gpu_event_record(stop, 0);
+            gpu_event_synchronize(stop);
+            float duration = 0.f;
+            gpu_event_elapsed_time(&duration, start, stop);
+
+            gpu_event_destroy(start);
+            gpu_event_destroy(stop);
+            #endif
 
             Status::print_message("Duration longwave solver: " + std::to_string(duration) + " (ms)");
         };
@@ -675,6 +700,7 @@ void solve_radiation(int argc, char** argv)
 
             Array_gpu<Float,1> land_use_map_gpu(land_use_map);
 
+            #if !defined(RTE_USE_KMM)
             cudaDeviceSynchronize();
             cudaEvent_t start;
             cudaEvent_t stop;
@@ -682,6 +708,15 @@ void solve_radiation(int argc, char** argv)
             cudaEventCreate(&stop);
 
             cudaEventRecord(start, 0);
+            #else
+            gpu_device_synchronize();
+            gpu_event_t start;
+            gpu_event_t stop;
+            gpu_event_create(&start);
+            gpu_event_create(&stop);
+
+            gpu_event_record(start, 0);
+            #endif
 
             rad_sw.solve_gpu_bb(
                     switch_cloud_optics,
@@ -716,6 +751,7 @@ void solve_radiation(int argc, char** argv)
                     dist_cam,
                     zen_cam);
 
+            #if !defined(RTE_USE_KMM)
             cudaEventRecord(stop, 0);
             cudaEventSynchronize(stop);
             float duration = 0.f;
@@ -723,6 +759,15 @@ void solve_radiation(int argc, char** argv)
 
             cudaEventDestroy(start);
             cudaEventDestroy(stop);
+            #else
+            gpu_event_record(stop, 0);
+            gpu_event_synchronize(stop);
+            float duration = 0.f;
+            gpu_event_elapsed_time(&duration, start, stop);
+
+            gpu_event_destroy(start);
+            gpu_event_destroy(stop);
+            #endif
 
             Status::print_message("Duration shortwave solver (broadband version): " + std::to_string(duration) + " (ms)");
         };
@@ -749,6 +794,7 @@ void solve_radiation(int argc, char** argv)
 
             Array_gpu<Float,1> land_use_map_gpu(land_use_map);
 
+            #if !defined(RTE_USE_KMM)
             cudaDeviceSynchronize();
             cudaEvent_t start;
             cudaEvent_t stop;
@@ -756,6 +802,15 @@ void solve_radiation(int argc, char** argv)
             cudaEventCreate(&stop);
 
             cudaEventRecord(start, 0);
+            #else
+            gpu_device_synchronize();
+            gpu_event_t start;
+            gpu_event_t stop;
+            gpu_event_create(&start);
+            gpu_event_create(&stop);
+
+            gpu_event_record(start, 0);
+            #endif
 
             rad_sw.solve_gpu(
                     tune_step,
@@ -791,6 +846,7 @@ void solve_radiation(int argc, char** argv)
                     dist_cam,
                     zen_cam);
 
+            #if !defined(RTE_USE_KMM)
             cudaEventRecord(stop, 0);
             cudaEventSynchronize(stop);
             float duration = 0.f;
@@ -798,6 +854,15 @@ void solve_radiation(int argc, char** argv)
 
             cudaEventDestroy(start);
             cudaEventDestroy(stop);
+            #else
+            gpu_event_record(stop, 0);
+            gpu_event_synchronize(stop);
+            float duration = 0.f;
+            gpu_event_elapsed_time(&duration, start, stop);
+
+            gpu_event_destroy(start);
+            gpu_event_destroy(stop);
+            #endif
 
             Status::print_message("Duration shortwave solver (image version): " + std::to_string(duration) + " (ms)");
         };

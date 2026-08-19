@@ -32,6 +32,11 @@
 #include "rte_sw_rt.h"
 #include "tools_gpu.h"
 
+#ifdef RTE_USE_KMM
+#include "kmm/core/backends.hpp"
+using kmm::gpu_event_t;
+#endif
+
 
 template<typename T>
 T get_ini_value(const toml::value& ini_file, const std::string& group, const std::string& item)
@@ -513,6 +518,7 @@ void solve_radiation(int argc, char** argv)
 
             Status::print_message("Starting the longwave raytracer!!");
 
+            #if !defined(RTE_USE_KMM)
             cudaDeviceSynchronize();
             cudaEvent_t start;
             cudaEvent_t stop;
@@ -520,6 +526,15 @@ void solve_radiation(int argc, char** argv)
             cudaEventCreate(&stop);
 
             cudaEventRecord(start, 0);
+            #else
+            gpu_device_synchronize();
+            gpu_event_t start;
+            gpu_event_t stop;
+            gpu_event_create(&start);
+            gpu_event_create(&stop);
+
+            gpu_event_record(start, 0);
+            #endif
             // do something.
 
 	        raytracer_lw.trace_rays(
@@ -547,6 +562,7 @@ void solve_radiation(int argc, char** argv)
                    lw_rt_flux_sfc_up,
                    lw_rt_flux_abs);
 
+            #if !defined(RTE_USE_KMM)
             cudaEventRecord(stop, 0);
             cudaEventSynchronize(stop);
             float duration = 0.f;
@@ -554,6 +570,15 @@ void solve_radiation(int argc, char** argv)
 
             cudaEventDestroy(start);
             cudaEventDestroy(stop);
+            #else
+            gpu_event_record(stop, 0);
+            gpu_event_synchronize(stop);
+            float duration = 0.f;
+            gpu_event_elapsed_time(&duration, start, stop);
+
+            gpu_event_destroy(start);
+            gpu_event_destroy(stop);
+            #endif
 
             Status::print_message("Duration longwave raytracer: " + std::to_string(duration) + " (ms)");
 
@@ -644,6 +669,7 @@ void solve_radiation(int argc, char** argv)
             // Solve the radiation.
             Status::print_message("Starting the shortwave raytracer!!");
 
+            #if !defined(RTE_USE_KMM)
             cudaDeviceSynchronize();
             cudaEvent_t start;
             cudaEvent_t stop;
@@ -651,6 +677,15 @@ void solve_radiation(int argc, char** argv)
             cudaEventCreate(&stop);
 
             cudaEventRecord(start, 0);
+            #else
+            gpu_device_synchronize();
+            gpu_event_t start;
+            gpu_event_t stop;
+            gpu_event_create(&start);
+            gpu_event_create(&stop);
+
+            gpu_event_record(start, 0);
+            #endif
             // do something.
 
             raytracer.trace_rays(
@@ -684,6 +719,7 @@ void solve_radiation(int argc, char** argv)
                    sw_rt_flux_abs_dir,
                    sw_rt_flux_abs_dif);
 
+            #if !defined(RTE_USE_KMM)
             cudaEventRecord(stop, 0);
             cudaEventSynchronize(stop);
             float duration = 0.f;
@@ -691,6 +727,15 @@ void solve_radiation(int argc, char** argv)
 
             cudaEventDestroy(start);
             cudaEventDestroy(stop);
+            #else
+            gpu_event_record(stop, 0);
+            gpu_event_synchronize(stop);
+            float duration = 0.f;
+            gpu_event_elapsed_time(&duration, start, stop);
+
+            gpu_event_destroy(start);
+            gpu_event_destroy(stop);
+            #endif
 
             Status::print_message("Duration shortwave raytracer: " + std::to_string(duration) + " (ms)");
 
@@ -734,6 +779,7 @@ void solve_radiation(int argc, char** argv)
         // Solve the radiation.
         Status::print_message("Starting the backward raytracer!!");
 
+        #if !defined(RTE_USE_KMM)
         cudaDeviceSynchronize();
         cudaEvent_t start;
         cudaEvent_t stop;
@@ -741,6 +787,15 @@ void solve_radiation(int argc, char** argv)
         cudaEventCreate(&stop);
 
         cudaEventRecord(start, 0);
+        #else
+        gpu_device_synchronize();
+        gpu_event_t start;
+        gpu_event_t stop;
+        gpu_event_create(&start);
+        gpu_event_create(&stop);
+
+        gpu_event_record(start, 0);
+        #endif
 
         raytracer_bw.trace_rays_bb(
                 0,
@@ -769,6 +824,7 @@ void solve_radiation(int argc, char** argv)
                 camera,
                 radiance);
 
+        #if !defined(RTE_USE_KMM)
         cudaEventRecord(stop, 0);
         cudaEventSynchronize(stop);
         float duration = 0.f;
@@ -776,6 +832,15 @@ void solve_radiation(int argc, char** argv)
 
         cudaEventDestroy(start);
         cudaEventDestroy(stop);
+        #else
+        gpu_event_record(stop, 0);
+        gpu_event_synchronize(stop);
+        float duration = 0.f;
+        gpu_event_elapsed_time(&duration, start, stop);
+
+        gpu_event_destroy(start);
+        gpu_event_destroy(stop);
+        #endif
 
         Status::print_message("Duration bw raytracer: " + std::to_string(duration) + " (ms)");
 

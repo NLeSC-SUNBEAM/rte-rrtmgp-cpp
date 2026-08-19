@@ -49,7 +49,11 @@ class Raytracer_lw
                 Array_gpu<Float,3>& flux_abs);
 
     private:
+        #if defined(RTE_USE_CUDA)
         curandDirectionVectors32_t* qrng_vectors_gpu;
+        #elif defined(RTE_USE_HIP)
+        hiprandDirectionVectors32_t* qrng_vectors_gpu;
+        #endif
         unsigned int* qrng_constants_gpu;
 
         Int qrng_igpt = 0;

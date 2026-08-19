@@ -220,6 +220,7 @@ namespace
 
 Raytracer::Raytracer()
 {
+    #if defined(RTE_USE_CUDA)
     curandDirectionVectors32_t* qrng_vectors;
     curandGetDirectionVectors32(
                 &qrng_vectors,
@@ -229,6 +230,17 @@ Raytracer::Raytracer()
 
     this->qrng_vectors_gpu = allocate_gpu<curandDirectionVectors32_t>(2);
     this->qrng_constants_gpu = allocate_gpu<unsigned int>(2);
+    #elif defined(RTE_USE_HIP)
+    hiprandDirectionVectors32_t* qrng_vectors;
+    hiprandGetDirectionVectors32(
+                &qrng_vectors,
+                HIPRAND_SCRAMBLED_DIRECTION_VECTORS_32_JOEKUO6);
+    const unsigned int* qrng_constants;
+    hiprandGetScrambleConstants32(&qrng_constants);
+
+    this->qrng_vectors_gpu = allocate_gpu<hiprandDirectionVectors32_t>(2);
+    this->qrng_constants_gpu = allocate_gpu<unsigned int>(2);
+    #endif
 
     copy_to_gpu(qrng_vectors_gpu, qrng_vectors, 2);
     copy_to_gpu(qrng_constants_gpu, qrng_constants, 2);

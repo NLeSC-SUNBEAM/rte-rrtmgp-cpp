@@ -30,7 +30,6 @@
 #include "raytracer_bw.h"
 #include "raytracer_kernels_bw.h"
 #include "source_functions_rt.h"
-#include <curand_kernel.h>
 
 
 

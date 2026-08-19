@@ -31,7 +31,6 @@
 #include "raytracer_lw.h"
 #include "raytracer_kernels_sw.h"
 #include "source_functions_rt.h"
-#include <curand_kernel.h>
 
 
 class Radiation_solver_longwave

@@ -410,7 +410,7 @@ Raytracer_lw::Raytracer_lw()
     hiprandGetDirectionVectors32(
                 &qrng_vectors,
                 HIPRAND_SCRAMBLED_DIRECTION_VECTORS_32_JOEKUO6);
-    unsigned int* qrng_constants;
+    const unsigned int* qrng_constants;
     hiprandGetScrambleConstants32(&qrng_constants);
 
     this->qrng_vectors_gpu = allocate_gpu<hiprandDirectionVectors32_t>(2);

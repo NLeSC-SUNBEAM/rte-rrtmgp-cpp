@@ -20,7 +20,6 @@
 #include <boost/algorithm/string.hpp>
 #include <cmath>
 #include <numeric>
-#include <curand_kernel.h>
 
 #include "radiation_solver_rt.h"
 #include "status.h"

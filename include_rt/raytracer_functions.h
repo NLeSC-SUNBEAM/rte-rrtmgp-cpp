@@ -220,7 +220,7 @@ namespace Raytracer_functions
 
         __device__ T operator()();
 
-        hiprandState state;
+        hiprandState_t state;
     };
 
 
